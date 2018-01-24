@@ -12,8 +12,8 @@
 
 using namespace cv;
 
-#define MAX_WIDTH 			 720
-#define MAX_HEIGHT 			 576
+#define MAX_WIDTH 			 1920
+#define MAX_HEIGHT 			 1080
 /*
 #define POIINTSTHRESH		 5000
 #define POINTS_NUM			 100

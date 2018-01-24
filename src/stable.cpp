@@ -235,13 +235,13 @@ void CStability::init()
 	s->grid_h = (((imgh>>2)/18)>>2)<<2;
 	s->grid_h = s->grid_h < 8 ? 8 : s->grid_h;
 
-	s->fD1Cur->i_stride[0] = imgw;
-	s->fD1Cur->i_stride[1] = imgw>>1;
-	s->fD1Cur->i_stride[2] = imgw>>2;
+	//s->fD1Cur->i_stride[0] = imgw;
+	//s->fD1Cur->i_stride[1] = imgw>>1;
+	//s->fD1Cur->i_stride[2] = imgw>>2;
 
-	s->fD1Out->i_stride[0] = imgw;
-	s->fD1Out->i_stride[1] = imgw>>1;
-	s->fD1Out->i_stride[2] = imgw>>2;
+	//s->fD1Out->i_stride[0] = imgw;
+	//s->fD1Out->i_stride[1] = imgw>>1;
+	//s->fD1Out->i_stride[2] = imgw>>2;
 
 	memset(s->D1Fp,0,   (imgw>>2)*(imgh>>2)*sizeof(FPOINT));
 	memset(s->CifFp,0,  (imgw>>2)*(imgh>>2)*sizeof(FPOINT));
@@ -466,6 +466,9 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	}
 	else
 	{
+		s->i_width = nWidth;
+		s->i_height = nHeight;
+
 		s->grid_w = (((nWidth>>2)/22)>>2)<<2;
 		s->grid_w = s->grid_w < 8 ? 8 : s->grid_w;
 		s->grid_h = (((nHeight>>2)/18)>>2)<<2;

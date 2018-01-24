@@ -7,8 +7,10 @@
 //#include <xmmintrin.h>
 //#include <pmmintrin.h>
 //#include <mmintrin.h>
-//#include <omp.h>
+#include <omp.h>
 //#include <smmintrin.h>
+#include <arm_neon.h>
+#include "sse2neon.hpp"
 
 
 void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int pitch,int sx, int sy,unsigned int * match)                                                              
@@ -17,7 +19,7 @@ void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int p
    unsigned int matpos, matval;                                   
    unsigned char *psrc,*pref;														  
    unsigned int acc ;
-   unsigned int _acc[8];
+   unsigned short _acc[8];
    matval = ~0U;                                              
    matx = maty = 0;                           
    
@@ -26,7 +28,7 @@ void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int p
 	   for (x = 0; x < sx; x++)                                   
 	   {
 	   	  acc = 0;    
-	 #if 1
+	 #if 0
 		  for(j = 0;j<8;j++)
 		  {
 		  	psrc = (unsigned char *)(srcImg + j*pitch);
@@ -48,7 +50,9 @@ void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int p
 				_a128 = _mm_loadl_epi64((__m128i*)(srcImg + srcPtr));
 				_b128 = _mm_loadl_epi64((__m128i*)(refImg + refPtr));
 				rslt = _mm_sad_epu8(_a128,_b128);
-				_acc[j] = _mm_extract_epi32(rslt,0);
+				//_acc[j] = _mm_extract_epi32(rslt,0)
+				// extern int _mm_extract_epi32(_m128i src,const int ndx);
+				_acc[j] = vgetq_lane_u16((uint16x8_t)rslt,0);
 			//	_mm_empty();
 			}
 			acc = (_acc[0] + _acc[1] + _acc[2] + _acc[3] + _acc[4] + _acc[5] + _acc[6] + _acc[7]);
@@ -254,11 +258,12 @@ static void disove_rslt(float *pQ, float *pAB, float *pBB, int n)
 void GetAllMvRefine(FPOINT *fp,int fp_num,unsigned char *fimg,unsigned char *pref,int i_width, int i_height,int WinX, int WinY)
 {
     int i;
-    int rx, ry,scaleXmem,scaleYmem;
-    unsigned char *refbufpp,*cur_img;
-    unsigned int bm[2];
+#pragma omp parallel for
     for (i = 0; i < fp_num; i++)
-    {        
+    { 
+   	    int rx, ry,scaleXmem,scaleYmem;
+   	    unsigned char *refbufpp,*cur_img;
+  	    unsigned int bm[2];
 	    cur_img = (unsigned char*)(fimg + (fp[i].y - 3) * i_width + (fp[i].x - 3));
 
 	    rx = fp[i].x + fp[i].px - 3;

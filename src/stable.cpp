@@ -45,9 +45,11 @@ void Create_stable(void)
 	return;
 }
 
-void run_stable(Mat src,Mat dst,int nWidth,int nheight,uchar mode)
+void run_stable(Mat src,Mat dst,int nWidth,int nheight,uchar mode,unsigned int edge_h,unsigned int edge_v)
 {
-	pStableObj->RunStabilize(src,dst,nWidth,nheight,mode);
+	// 1920   : edge_h  	320 pixel		edge_v	180	pixel	   // distance to the edge in pixel
+	// 720 	: edge_h 		32   pixel		edge_v 	32	pixel
+	pStableObj->RunStabilize(src,dst,nWidth,nheight,mode,edge_h,edge_v);
 }
 
 void destroy_stable(void)
@@ -172,6 +174,46 @@ void CStability::init()
 	stb_t* s = tss;
 	allocspace();
 
+	s->cur_af.cos = 1.0;
+	s->cur_af.sin = 0.0;
+	s->cur_af.dx = 0.0;
+	s->cur_af.dy = 0.0;
+	s->cur_af.theta = 0.0;
+	s->cur_af.scale = 1.0;
+	
+	s->last_af.cos = 1.0;
+	s->last_af.sin = 0.0;
+	s->last_af.dx = 0.0;
+	s->last_af.dy = 0.0;
+	s->last_af.theta = 0.0;
+	s->last_af.scale = 1.0;
+
+	s->bak_af.cos = 1.0;
+	s->bak_af.sin = 0.0;
+	s->bak_af.dx = 0.0;
+	s->bak_af.dy = 0.0;
+	s->bak_af.theta = 0.0;
+	s->bak_af.scale = 1.0;
+
+	s->ap_cif.cos = 1.0;
+	s->ap_cif.sin = 0.0;
+	s->ap_cif.dx = 0.0;
+	s->ap_cif.dy = 0.0;
+	s->ap_cif.theta = 0.0;
+	s->ap_cif.scale = 1.0;
+
+	s->ap_qcif.cos = 1.0;
+	s->ap_qcif.sin = 0.0;
+	s->ap_qcif.dx = 0.0;
+	s->ap_qcif.dy = 0.0;
+	s->ap_qcif.theta = 0.0;
+	s->ap_qcif.scale = 1.0;
+	
+	s->flt.xout = 0;
+	s->flt.yout = 0;
+	s->flt.sout = 1.0;
+	s->flt.thetaout = 0.0;
+
 	m_modify->cos = 1.0;
 	m_modify->sin = 0.0;
 	m_modify->dx = 0.0;
@@ -179,6 +221,11 @@ void CStability::init()
 	m_modify->theta = 0.0;
 	m_modify->scale = 1.0;
 
+	s->bReset = 0x01;
+
+    	s->D1FpNum = 0;
+    	s->CifFpNum = 0;
+    	s->QcifFpNum = 0;
 
 	s->i_width  = imgw;
 	s->i_height = imgh;
@@ -190,15 +237,15 @@ void CStability::init()
 
 	s->fD1Cur->i_stride[0] = imgw;
 	s->fD1Cur->i_stride[1] = imgw>>1;
-	s->fD1Cur->i_stride[2] = imgw>>1;
+	s->fD1Cur->i_stride[2] = imgw>>2;
 
 	s->fD1Out->i_stride[0] = imgw;
 	s->fD1Out->i_stride[1] = imgw>>1;
-	s->fD1Out->i_stride[2] = imgw>>1;
+	s->fD1Out->i_stride[2] = imgw>>2;
 
-	memset(s->D1Fp,0,   (MAX_WIDTH>>2)*(MAX_HEIGHT>>2)*sizeof(FPOINT));
-	memset(s->CifFp,0,  (MAX_WIDTH>>2)*(MAX_HEIGHT>>2)*sizeof(FPOINT));
-	memset(s->QcifFp,0, (MAX_WIDTH>>2)*(MAX_HEIGHT>>2)*sizeof(FPOINT));
+	memset(s->D1Fp,0,   (imgw>>2)*(imgh>>2)*sizeof(FPOINT));
+	memset(s->CifFp,0,  (imgw>>2)*(imgh>>2)*sizeof(FPOINT));
+	memset(s->QcifFp,0, (imgw>>2)*(imgh>>2)*sizeof(FPOINT));
 
 	OpenStabilize(s);
 }
@@ -210,31 +257,6 @@ void CStability::OpenStabilize(stb_t* s)
     int DP = 8;  //Kalman: number of state   vector dimensions
     int CP = 0;  //Kalman: number of control vector dimensions
 
-    s->bReset = 0x01;
-
-    s->D1FpNum = 0;
-    s->CifFpNum = 0;
-    s->QcifFpNum = 0;
-
-    s->cur_af.cos = 1.0;
-    s->cur_af.sin = 0.0;
-    s->cur_af.dx = 0.0;
-    s->cur_af.dy = 0.0;
-    s->cur_af.theta = 0.0;
-    s->cur_af.scale = 1.0;
-
-    s->last_af.cos = 1.0;
-    s->last_af.sin = 0.0;
-    s->last_af.dx = 0.0;
-    s->last_af.dy = 0.0;
-    s->last_af.theta = 0.0;
-    s->last_af.scale = 1.0;
-
-    s->flt.xout = 0;
-    s->flt.yout = 0;
-    s->flt.sout = 1.0;
-    s->flt.thetaout = 0.0;
-
     /*Kalman Filter Init*/
     s->g_pKalman = kkalman.KalmanOpen(DP, MP, CP);
     if (s->g_pKalman == NULL)
@@ -243,8 +265,7 @@ void CStability::OpenStabilize(stb_t* s)
     }
 
     kkalman.KalmanInitParam(s->g_pKalman, 0.0, 0.0, 0.0, 1.0, 0.0);	
-
-	return ;
+    return ;
 }
 
 void CStability::allocspace()
@@ -308,28 +329,28 @@ void CStability::showPoints(unsigned char code)
 	v_mb_num = (s->i_height>>2)/s->grid_h;
 
 	int height,width;
-	unsigned char* dst1 = (unsigned char*)malloc(576*720);
-	unsigned char* dst2 = (unsigned char*)malloc(576*720);
+	unsigned char* dst1 = (unsigned char*)malloc(s->i_height*s->i_width);
+	unsigned char* dst2 = (unsigned char*)malloc(s->i_height*s->i_width);
 	unsigned char *src1,*src2;
 	switch(code)
 	{
 		case 0 :
 			src1 = s->fQcifCur;
 			src2 = s->fQcifRef;
-			height = 576>>2;
-			width  = 720>>2;
+			height = s->i_height>>2;
+			width  = s->i_width>>2;
 			break;
 		case 1:
 			src1 = s->fCifCur;
 			src2 = s->fCifRef;
-			height = 576>>1;
-			width  = 720>>1;
+			height = s->i_height>>1;
+			width  = s->i_width>>1;
 			break;
 		case 2:
 			src1 = s->fD1Cur->buffer[0];
 			src2 = s->fD1Ref;
-			height = 576;
-			width  = 720;
+			height = s->i_height;
+			width  = s->i_width;
 			break;
 		default :
 			break;
@@ -407,7 +428,7 @@ void CStability::showPoints(unsigned char code)
 }
 
 
-int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode)
+int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v)
 {
 	int i;
 	CStability *cs = pThis;
@@ -437,8 +458,25 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode)
 
 	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
 	src.copyTo(mfcur);
+
+	if(nWidth == 1920)
+	{
+		edge_h = cedge_h / s->grid_w ;
+		edge_v = cedge_v / s->grid_h ;
+	}
+	else
+	{
+		s->grid_w = (((nWidth>>2)/22)>>2)<<2;
+		s->grid_w = s->grid_w < 8 ? 8 : s->grid_w;
+		s->grid_h = (((nHeight>>2)/18)>>2)<<2;
+		s->grid_h = s->grid_h < 8 ? 8 : s->grid_h;
+
+		edge_h = cedge_h / s->grid_h ;
+		edge_v = cedge_v / s->grid_w ;
+	}
 	
-	for (int i = 0; i < (MAX_WIDTH >> 2) * (MAX_HEIGHT >> 2); i++)
+	
+	for (int i = 0; i < (s->i_width>> 2) * (s->i_height>> 2); i++)
     	{
        	s->D1Fp[i].ftv = 0x00;
        	s->CifFp[i].ftv = 0x00;
@@ -474,7 +512,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode)
 	 {
 		 /*  	Find the feature points	*/
 		kfindFtp.findFtp(&(s->edgeTh), s->QcifFp, &(s->QcifFpNum),s->i_width >> 2, s->i_height >> 2, 
-				s->i_width >> 1, s->i_width,s->grid_w, s->grid_h, 4, 4,
+				s->i_width >> 1, s->i_width,s->grid_w, s->grid_h, edge_h, edge_v,
 				s->CifFp, &(s->CifFpNum),s->D1Fp, &(s->D1FpNum),
 				mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel);
 

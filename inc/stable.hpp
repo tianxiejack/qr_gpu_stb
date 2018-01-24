@@ -19,7 +19,7 @@ public:
 	void allocspace();
 	void OpenStabilize(stb_t *s);
 	void CloseStabilize(stb_t *s);
-	int RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode);
+	int RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int edge_h,unsigned int edge_v);
 	void showPoints(unsigned char code);
 
 	int MeErr, MeErr_qcif, MeErr_cif;
@@ -29,6 +29,7 @@ public:
 	affine_param* m_modify;
 
 public:
+	unsigned char edge_v,edge_h;
 	CKalman kkalman;
 	CFindFtp kfindFtp;
 	Mat mfout,mfcur,mfcur_sobel,mfCur_ref,mfcur_sobel_ref;

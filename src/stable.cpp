@@ -574,11 +574,12 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 void CStability::analytime()
 {
 	int i;
-
+	unsigned int tmp;
 	if(anytimenum == DEBUGTIME)
 	{
 		for(i = 0;i<11;i++)
 			avr[i] = anytime[i]/DEBUGTIME;
+		avr[15] = anytime[15]/DEBUGTIME;
 		anytimenum = 0;
 
 		//for(i = 0;i<11;i++)
@@ -612,7 +613,11 @@ void CStability::analytime()
 			printf("motioncpmpensate min[%d] = %u\n",i,mintime[i]);
 			printf("motioncpmpensate avr[%d] = %u\n",i,avr[i]);	
 			printf("motioncpmpensate max[%d] = %u\n",i,maxtime[i]);	
-					
+
+			i=15;
+			printf("allcost min[%d] = %u\n",i,mintime[i]);
+			printf("allcost avr[%d] = %u\n",i,avr[i]);	
+			printf("allcost max[%d] = %u\n",i,maxtime[i]);				
 		}
 			
 				
@@ -623,22 +628,36 @@ void CStability::analytime()
 	}
 	else if(anytimenum == 0)
 	{
-		memset(avr,0,sizeof(unsigned int));
-		memset(mintime,100,20*sizeof(unsigned int));
+		memset(anytime,0,sizeof(unsigned int));
+		memset(mintime,10000,20*sizeof(unsigned int));
+		memset(maxtime,0,20*sizeof(unsigned int));
 	}
-	
-	for(i = 0;i<11;i++)
+	else
 	{
-		if(i == 4)
-			continue;
-		anytime[i] += (time[i+1] - time[i]);
-		if(anytime[i] < mintime[i])
-			mintime[i] = anytime[i];
-		else if(anytime[i]>maxtime[i])
-			maxtime[i] = anytime[i];
-	}	
-
 	
+		for(i = 0;i<11;i++)
+		{
+			if(i == 4)
+				continue;
+			tmp = (time[i+1] - time[i]);
+			anytime[i] += tmp;
+			
+			if(tmp < mintime[i])
+				mintime[i] = tmp;		
+			else if(tmp>maxtime[i])
+				maxtime[i] = tmp;
+		}	
+		
+		tmp = time[11] - time[0];
+		anytime[15] += tmp;
+		if(tmp < mintime[15])
+			mintime[15] = tmp;		
+		else if(tmp> maxtime[15])
+			maxtime[15] = tmp;
+			
+		
+
+	}
 	anytimenum ++ ;
 
 	return ;	

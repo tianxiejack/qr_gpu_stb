@@ -9,7 +9,7 @@
 #include <unistd.h>
 //int numStableObj = 0;
 CStability* pStableObj = NULL;
-
+#define DEBUGTIME 	500
 /*
 *待添加
 *1.稳像区域接口
@@ -570,15 +570,15 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	
 	return 0;
 }
-#if 1
+
 void CStability::analytime()
 {
 	int i;
 
-	if(anytimenum == 50)
+	if(anytimenum == DEBUGTIME)
 	{
 		for(i = 0;i<11;i++)
-			avr[i] = anytime[i]/100;
+			avr[i] = anytime[i]/DEBUGTIME;
 		anytimenum = 0;
 
 		//for(i = 0;i<11;i++)
@@ -617,7 +617,7 @@ void CStability::analytime()
 			
 				
 	}
-	else if(anytimenum >50)
+	else if(anytimenum >DEBUGTIME)
 	{
 		anytimenum = 0;	
 	}
@@ -643,4 +643,4 @@ void CStability::analytime()
 
 	return ;	
 }
-#endif
+

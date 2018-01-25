@@ -6,6 +6,7 @@
 #include "MotionFilter.hpp"
 #include "motionCompensate.hpp"
 
+#include <unistd.h>
 //int numStableObj = 0;
 CStability* pStableObj = NULL;
 
@@ -436,6 +437,10 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	affine_param *ap_modify = cs->m_modify;
 	static char pp = 0;
 	int ttt,nnn = 0;
+	
+
+	//printf("\n********************begin***********\n");
+	time[0] = OSA_getCurTimeInMsec();
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
 	mfout = Mat(s->i_height, s->i_width, CV_8UC1);
@@ -457,8 +462,12 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
 
 	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
+	time[1] = OSA_getCurTimeInMsec();
+
 	src.copyTo(mfcur);
 
+	time[2] = OSA_getCurTimeInMsec();
+	
 	if(nWidth == 1920)
 	{
 		edge_h = cedge_h / s->grid_w ;
@@ -477,8 +486,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 		edge_h = cedge_h / s->grid_h ;
 		edge_v = cedge_v / s->grid_w ;
 	}
-	
-	
+		
 	for (int i = 0; i < (s->i_width>> 2) * (s->i_height>> 2); i++)
     	{
        	s->D1Fp[i].ftv = 0x00;
@@ -486,8 +494,12 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
         	s->QcifFp[i].ftv = 0x00;
     	}
 
+	time[3] = OSA_getCurTimeInMsec();
+	
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
+
+	time[4] = OSA_getCurTimeInMsec();
 
 	/*  init the param of kalman	 */
 	if(s->bReset)
@@ -513,11 +525,16 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	}
 	 else
 	 {
+
+	 	time[5] = OSA_getCurTimeInMsec();
+	
 		 /*  	Find the feature points	*/
 		kfindFtp.findFtp(&(s->edgeTh), s->QcifFp, &(s->QcifFpNum),s->i_width >> 2, s->i_height >> 2, 
 				s->i_width >> 1, s->i_width,s->grid_w, s->grid_h, edge_h, edge_v,
 				s->CifFp, &(s->CifFpNum),s->D1Fp, &(s->D1FpNum),
 				mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel);
+
+		 time[6] = OSA_getCurTimeInMsec();
 
 		/*		此处待添加调试  FTP_SHOW		*/
 		if (s->QcifFpNum < 3) //特征点太少
@@ -527,21 +544,103 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 			MeErr = 10;
 		}
 		else		
-			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);		
-
-		AnalysisMeResult(cs);
+			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);	
+		time[7] = OSA_getCurTimeInMsec();
 		
-		MotionFilter(cs);
+		AnalysisMeResult(cs);
 
+		time[8] = OSA_getCurTimeInMsec();
+ 		MotionFilter(cs);
+		
+ 		time[9] = OSA_getCurTimeInMsec();
 		MotionProcess(cs,mfcur,dst,mode);
+
+		time[10] = OSA_getCurTimeInMsec();
 		
 	    FRAME_EXCHANGE(s->fD1Ref,s->fD1Cur->buffer[0]);	
 	    FRAME_EXCHANGE(s->fD1RefSobel, mfcur_sobel.data);
 	    FRAME_EXCHANGE(s->fCifRef,      mfCifCur.data);
 	    FRAME_EXCHANGE(s->fCifRefSobel, mfCifCur_sobel.data);
 	    FRAME_EXCHANGE(s->fQcifRef,     mfQcifCur.data);
-	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);		 
+	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);		
+	      time[11] = OSA_getCurTimeInMsec();
 	 }
+	
+	analytime();
+	
 	return 0;
 }
+#if 1
+void CStability::analytime()
+{
+	int i;
 
+	if(anytimenum == 50)
+	{
+		for(i = 0;i<11;i++)
+			avr[i] = anytime[i]/100;
+		anytimenum = 0;
+
+		//for(i = 0;i<11;i++)
+		{
+			i = 3;
+			printf("preprocess min[%d] = %u\n",i,mintime[i]);
+			printf("preprocess avr[%d] = %u\n",i,avr[i]);	
+			printf("preprocess max[%d] = %u\n",i,maxtime[i]);
+
+			i = 5;
+			printf("findpoint min[%d] = %u\n",i,mintime[i]);
+			printf("findpoint avr[%d] = %u\n",i,avr[i]);	
+			printf("findpoint max[%d] = %u\n",i,maxtime[i]);	
+
+			i = 6;
+			printf("match min[%d] = %u\n",i,mintime[i]);
+			printf("match avr[%d] = %u\n",i,avr[i]);	
+			printf("match max[%d] = %u\n",i,maxtime[i]);	
+
+			i = 7;
+			printf("analy min[%d] = %u\n",i,mintime[i]);
+			printf("analy avr[%d] = %u\n",i,avr[i]);	
+			printf("analy max[%d] = %u\n",i,maxtime[i]);	
+			
+			i = 8;
+			printf("motionfilter min[%d] = %u\n",i,mintime[i]);
+			printf("motionfilter avr[%d] = %u\n",i,avr[i]);	
+			printf("motionfilter max[%d] = %u\n",i,maxtime[i]);	
+
+			i = 9;
+			printf("motioncpmpensate min[%d] = %u\n",i,mintime[i]);
+			printf("motioncpmpensate avr[%d] = %u\n",i,avr[i]);	
+			printf("motioncpmpensate max[%d] = %u\n",i,maxtime[i]);	
+					
+		}
+			
+				
+	}
+	else if(anytimenum >50)
+	{
+		anytimenum = 0;	
+	}
+	else if(anytimenum == 0)
+	{
+		memset(avr,0,sizeof(unsigned int));
+		memset(mintime,100,20*sizeof(unsigned int));
+	}
+	
+	for(i = 0;i<11;i++)
+	{
+		if(i == 4)
+			continue;
+		anytime[i] += (time[i+1] - time[i]);
+		if(anytime[i] < mintime[i])
+			mintime[i] = anytime[i];
+		else if(anytime[i]>maxtime[i])
+			maxtime[i] = anytime[i];
+	}	
+
+	
+	anytimenum ++ ;
+
+	return ;	
+}
+#endif

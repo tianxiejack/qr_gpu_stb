@@ -566,7 +566,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	      time[11] = OSA_getCurTimeInMsec();
 	 }
 	
-	analytime();
+	//analytime();
 	
 	return 0;
 }

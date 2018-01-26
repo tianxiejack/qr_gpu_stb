@@ -224,9 +224,14 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 
 	#if 1
 	/*		sobel 	*/
-	IMG_sobel(fcur.data, fCurSobel.data,fcur.cols, fcur.rows);
-	IMG_sobel(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);
-	IMG_sobel(QcifCur.data, QcifCurSobel.data,QcifCur.cols, QcifCur.rows);
+	//IMG_sobel(fcur.data, fCurSobel.data,fcur.cols, fcur.rows);
+	//IMG_sobel(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);
+	//IMG_sobel(QcifCur.data, QcifCurSobel.data,QcifCur.cols, QcifCur.rows);
+
+	Sobel(fcur,fCurSobel,fcur.depth(),1,1);
+	Sobel(cifCur,cifCurSobel,fcur.depth(),1,1);
+	Sobel(QcifCur,QcifCurSobel,fcur.depth(),1,1);
+
 	
 	#else
 	cudaError_t cudaStatus;

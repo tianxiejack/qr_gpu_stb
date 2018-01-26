@@ -499,6 +499,9 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
 
+
+	
+
 	time[4] = OSA_getCurTimeInMsec();
 
 	/*  init the param of kalman	 */

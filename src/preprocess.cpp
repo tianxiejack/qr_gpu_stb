@@ -125,14 +125,13 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
               /* ------------------------------------------------ */
 	#endif
 
-		int i;    	/* Input pixel offset                     */
-              int o;   	/* Output pixel offset.                   */
+		//int i;    	/* Input pixel offset                     */
+              //int o;   	/* Output pixel offset.                   */
               int xy;   	/* Loop counter.                          */
 		  
-	//#pragma omp parallel
-	{
-		 //#pragma omp for
-         	 for ((xy = 0, i = cols + 1, o = 1);(xy < cols*(rows-2) - 2);(xy++, i++, o++))
+         	// for ((xy = 0, i = cols + 1, o = 1);(xy < cols*(rows-2) - 2);(xy++, i++, o++))
+         	#pragma omp parallel for
+         	for(xy = 0;xy<cols*(rows-2)-2;xy++)
               {
 			int H;    /* Horizontal mask result                 */
             	  	int V;    /* Vertical mask result                   */
@@ -150,9 +149,14 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
                   /*  being processed, which would correspond     */
                   /*  to the blank space left in the middle.      */
                   /* -------------------------------------------- */
-                  i00=in[i-cols-1]; i01=in[i-cols]; i02=in[i-cols+1];
-                  i10=in[i     -1];                 i12=in[i     +1];
-                  i20=in[i+cols-1]; i21=in[i+cols]; i22=in[i+cols+1];
+		
+                  //i00=in[i-cols-1]; i01=in[i-cols]; i02=in[i-cols+1];
+                  //i10=in[i     -1];                 i12=in[i     +1];
+                  //i20=in[i+cols-1]; i21=in[i+cols]; i22=in[i+cols+1];
+
+			i00 = in[xy];	i01 = in[xy + 1];	i02 = in[xy + 2];
+		 	i10 = in[cols + xy];		i12 = in[cols + 2 + xy];
+			i20 = in[2*cols + xy];	i21 = in[2*cols + 1 + xy];	i22 = in[2*cols + 2 + xy];
 
                   /* -------------------------------------------- */
                   /*  Apply the horizontal mask.                  */
@@ -176,9 +180,9 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
                   /* -------------------------------------------- */
                   /*  Store the result.                           */
                   /* -------------------------------------------- */
-                  out[o] = O;
+                  out[xy+1] = O;
               }
-		}
+
  }
 
 
@@ -218,7 +222,7 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 	timepoint[1] = OSA_getCurTimeInMsec();
 	
 
-	#if 0
+	#if 1
 	/*		sobel 	*/
 	IMG_sobel(fcur.data, fCurSobel.data,fcur.cols, fcur.rows);
 	IMG_sobel(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);

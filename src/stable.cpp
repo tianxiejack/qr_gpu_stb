@@ -46,11 +46,11 @@ void Create_stable(void)
 	return;
 }
 
-void run_stable(Mat src,Mat dst,int nWidth,int nheight,uchar mode,unsigned int edge_h,unsigned int edge_v)
+void run_stable(Mat src,Mat dst,int nWidth,int nheight,uchar mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout)
 {
 	// 1920   : edge_h  	320 pixel		edge_v	180	pixel	   // distance to the edge in pixel
 	// 720 	: edge_h 		32   pixel		edge_v 	32	pixel
-	pStableObj->RunStabilize(src,dst,nWidth,nheight,mode,edge_h,edge_v);
+	pStableObj->RunStabilize(src,dst,nWidth,nheight,mode,edge_h,edge_v,apout);
 }
 
 void destroy_stable(void)
@@ -485,7 +485,7 @@ void extractUYVY2Gray(Mat src, Mat dst)
 }
 
 
-int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v)
+int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v,affine_param* apout)
 {
 	int i;
 	CStability *cs = pThis;
@@ -596,17 +596,19 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	
 		MotionFilter(cs);
 
+		memcpy(apout,cs->m_modify,sizeof(affine_param));
+		
 		//MotionProcess(cs,mfcur,mfout,mode);
 		//cudaMemcpy(dst.data, mfout.data, s->i_height*s->i_width, cudaMemcpyHostToDevice);
 
 
-		MotionProcess(cs, src,dst,mode);
-		Mat mattmp = Mat(576,720,CV_8UC3);
-		cudaMemcpy(mattmp.data, dst.data, s->i_height*s->i_width*3, cudaMemcpyDeviceToHost);
-//printf("imshow\n");
-imshow("mfoutmfout",mattmp);
-//waitKey(0);
-//return 0;
+		//MotionProcess(cs, src,dst,mode);
+		//Mat mattmp = Mat(576,720,CV_8UC3);
+		//cudaMemcpy(mattmp.data, dst.data, s->i_height*s->i_width*3, cudaMemcpyDeviceToHost);
+		//printf("imshow\n");
+		//imshow("mfoutmfout",mattmp);
+		//waitKey(0);
+		//return 0;
 
 
 	    FRAME_EXCHANGE(s->fD1Ref,s->fD1Cur->buffer[0]);	

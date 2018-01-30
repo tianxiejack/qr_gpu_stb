@@ -19,7 +19,7 @@ public:
 	void allocspace();
 	void OpenStabilize(stb_t *s);
 	void CloseStabilize(stb_t *s);
-	int RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int edge_h,unsigned int edge_v);
+	int RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout);
 	void showPoints(unsigned char code);
 
 	int MeErr, MeErr_qcif, MeErr_cif;

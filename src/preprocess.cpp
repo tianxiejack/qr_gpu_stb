@@ -209,19 +209,17 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
 		//int i;    	/* Input pixel offset                     */
               //int o;   	/* Output pixel offset.                   */
               int xy;   	/* Loop counter.                          */
-		unsigned int t1 = OSA_getCurTimeInMsec();
-
+		  
          	// for ((xy = 0, i = cols + 1, o = 1);(xy < cols*(rows-2) - 2);(xy++, i++, o++))
-         	//#pragma omp parallel for num_threads (4)
+         	#pragma omp parallel for
          	for(xy = 0;xy<cols*(rows-2)-2;xy++)
               {
-         		int H;    /* Horizontal mask result                 */
+			int H;    /* Horizontal mask result                 */
             	  	int V;    /* Vertical mask result                   */
              	 	int O;    /* Sum of horizontal and vertical masks   */
-             	 	int i00, i01, i02;
-             	 	int i10,      i12;
-             		int i20, i21, i22;
-
+			int i00, i01, i02;
+			int i10,      i12;
+			int i20, i21, i22;
 	  
                   /* -------------------------------------------- */
                   /*  Read necessary data to process an input     */
@@ -266,9 +264,6 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
               }
 		printf("####elaspe : %u\n",OSA_getCurTimeInMsec() - t1 );
  }
-
-
-
 
 #endif
 
@@ -315,7 +310,6 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 	//Sobel(fcur,fCurSobel,fcur.depth(),1,1);
 	//Sobel(cifCur,cifCurSobel,fcur.depth(),1,1);
 	//Sobel(QcifCur,QcifCurSobel,fcur.depth(),1,1);
-
 	
 	#else
 	cudaError_t cudaStatus;

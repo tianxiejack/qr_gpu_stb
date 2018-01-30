@@ -257,7 +257,7 @@ static void disove_rslt(float *pQ, float *pAB, float *pBB, int n)
  */
 void GetAllMvRefine(FPOINT *fp,int fp_num,unsigned char *fimg,unsigned char *pref,int i_width, int i_height,int WinX, int WinY)
 {
-    int i;
+    int i ;
 #pragma omp parallel for
     for (i = 0; i < fp_num; i++)
     { 

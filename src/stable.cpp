@@ -7,9 +7,10 @@
 #include "motionCompensate.hpp"
 #include "cuda_runtime_api.h"
 
+#include <unistd.h>
 //int numStableObj = 0;
 CStability* pStableObj = NULL;
-
+#define DEBUGTIME 	500
 /*
 *待添加
 *1.稳像区域接口
@@ -493,9 +494,10 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	affine_param *ap_modify = cs->m_modify;
 	static char pp = 0;
 	int ttt,nnn = 0;
+	
+	time[0] = OSA_getCurTimeInMsec();
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
-	//printf("channels = %d\n",src.channels());
 	
 	if(nWidth == 1920)
 	{
@@ -515,8 +517,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 		edge_h = cedge_h / s->grid_h ;
 		edge_v = cedge_v / s->grid_w ;
 	}
-	
-	
+		
 	for (int i = 0; i < (s->i_width>> 2) * (s->i_height>> 2); i++)
     	{
        	s->D1Fp[i].ftv = 0x00;
@@ -548,9 +549,16 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
 	extractUYVY2Gray(tmp,mfcur);
 
+	time[3] = OSA_getCurTimeInMsec();
+	
 
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
+
+
+	
+
+	time[4] = OSA_getCurTimeInMsec();
 
 	/*  init the param of kalman	 */
 	if(s->bReset)
@@ -576,11 +584,16 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	}
 	 else
 	 {
+
+	 	time[5] = OSA_getCurTimeInMsec();
+	
 		 /*  	Find the feature points	*/
 		kfindFtp.findFtp(&(s->edgeTh), s->QcifFp, &(s->QcifFpNum),s->i_width >> 2, s->i_height >> 2, 
 				s->i_width >> 1, s->i_width,s->grid_w, s->grid_h, edge_h, edge_v,
 				s->CifFp, &(s->CifFpNum),s->D1Fp, &(s->D1FpNum),
 				mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel);
+
+		 time[6] = OSA_getCurTimeInMsec();
 
 		/*		此处待添加调试  FTP_SHOW		*/
 		if (s->QcifFpNum < 3) //特征点太少
@@ -616,8 +629,104 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	    FRAME_EXCHANGE(s->fCifRef,      mfCifCur.data);
 	    FRAME_EXCHANGE(s->fCifRefSobel, mfCifCur_sobel.data);
 	    FRAME_EXCHANGE(s->fQcifRef,     mfQcifCur.data);
-	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);		 
+	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);		
+	      time[11] = OSA_getCurTimeInMsec();
 	 }
+	
+	//analytime();
+	
 	return 0;
+}
+
+void CStability::analytime()
+{
+	int i;
+	unsigned int tmp;
+	if(anytimenum == DEBUGTIME)
+	{
+		for(i = 0;i<11;i++)
+			avr[i] = anytime[i]/DEBUGTIME;
+		avr[15] = anytime[15]/DEBUGTIME;
+		anytimenum = 0;
+
+		//for(i = 0;i<11;i++)
+		{
+			i = 3;
+			printf("preprocess min[%d] = %u\n",i,mintime[i]);
+			printf("preprocess avr[%d] = %u\n",i,avr[i]);	
+			printf("preprocess max[%d] = %u\n",i,maxtime[i]);
+
+			i = 5;
+			printf("findpoint min[%d] = %u\n",i,mintime[i]);
+			printf("findpoint avr[%d] = %u\n",i,avr[i]);	
+			printf("findpoint max[%d] = %u\n",i,maxtime[i]);	
+
+			i = 6;
+			printf("match min[%d] = %u\n",i,mintime[i]);
+			printf("match avr[%d] = %u\n",i,avr[i]);	
+			printf("match max[%d] = %u\n",i,maxtime[i]);	
+
+			i = 7;
+			printf("analy min[%d] = %u\n",i,mintime[i]);
+			printf("analy avr[%d] = %u\n",i,avr[i]);	
+			printf("analy max[%d] = %u\n",i,maxtime[i]);	
+			
+			i = 8;
+			printf("motionfilter min[%d] = %u\n",i,mintime[i]);
+			printf("motionfilter avr[%d] = %u\n",i,avr[i]);	
+			printf("motionfilter max[%d] = %u\n",i,maxtime[i]);	
+
+			i = 9;
+			printf("motioncpmpensate min[%d] = %u\n",i,mintime[i]);
+			printf("motioncpmpensate avr[%d] = %u\n",i,avr[i]);	
+			printf("motioncpmpensate max[%d] = %u\n",i,maxtime[i]);	
+
+			i=15;
+			printf("allcost min[%d] = %u\n",i,mintime[i]);
+			printf("allcost avr[%d] = %u\n",i,avr[i]);	
+			printf("allcost max[%d] = %u\n",i,maxtime[i]);				
+		}
+			
+				
+	}
+	else if(anytimenum >DEBUGTIME)
+	{
+		anytimenum = 0;	
+	}
+	else if(anytimenum == 0)
+	{
+		memset(anytime,0,sizeof(unsigned int));
+		memset(mintime,10000,20*sizeof(unsigned int));
+		memset(maxtime,0,20*sizeof(unsigned int));
+	}
+	else
+	{
+	
+		for(i = 0;i<11;i++)
+		{
+			if(i == 4)
+				continue;
+			tmp = (time[i+1] - time[i]);
+			anytime[i] += tmp;
+			
+			if(tmp < mintime[i])
+				mintime[i] = tmp;		
+			else if(tmp>maxtime[i])
+				maxtime[i] = tmp;
+		}	
+		
+		tmp = time[11] - time[0];
+		anytime[15] += tmp;
+		if(tmp < mintime[15])
+			mintime[15] = tmp;		
+		else if(tmp> maxtime[15])
+			maxtime[15] = tmp;
+			
+		
+
+	}
+	anytimenum ++ ;
+
+	return ;	
 }
 

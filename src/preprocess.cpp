@@ -164,18 +164,17 @@ void IMG_sobel2(const unsigned char* in, unsigned char* out,short cols, short ro
 	unsigned int t1 = OSA_getCurTimeInMsec();
 
 	#pragma omp parallel for num_threads (4)
-	for(i=0; i<4; i++){
+	for(i=0; i<8; i++){
 		unsigned char *pin, *pout;
-		pin = (unsigned char*)in + i*cols*rows/4;
-		pout = out + i*cols*rows/4;
-		if(i==3){
-			SUB_IMG_sobel(pin, pout, cols, rows/4-2);
+		pin = (unsigned char*)in + i*cols*rows/8;
+		pout = out + i*cols*rows/8;
+		if(i==8){
+			SUB_IMG_sobel(pin, pout, cols, rows/8-2);
 		}else{
-			SUB_IMG_sobel(pin, pout, cols, rows/4);
+			SUB_IMG_sobel(pin, pout, cols, rows/8);
 		}
 	}
 	printf("####elaspe : %u\n",OSA_getCurTimeInMsec() - t1 );
-
 }
 
 void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short rows)
@@ -209,7 +208,7 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
 		//int i;    	/* Input pixel offset                     */
               //int o;   	/* Output pixel offset.                   */
               int xy;   	/* Loop counter.                          */
-		  
+		unsigned int t1 = OSA_getCurTimeInMsec();
          	// for ((xy = 0, i = cols + 1, o = 1);(xy < cols*(rows-2) - 2);(xy++, i++, o++))
          	#pragma omp parallel for
          	for(xy = 0;xy<cols*(rows-2)-2;xy++)
@@ -303,7 +302,7 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 	/*		sobel 	*/
 	printf("******begin*********\n");
 	IMG_sobel2(fcur.data, fCurSobel.data,fcur.cols, fcur.rows);
-	IMG_sobel(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);
+	IMG_sobel2(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);
 	IMG_sobel(QcifCur.data, QcifCurSobel.data,QcifCur.cols, QcifCur.rows);
 	printf("******end*********\n");
 

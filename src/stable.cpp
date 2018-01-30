@@ -485,6 +485,25 @@ void extractUYVY2Gray(Mat src, Mat dst)
 	}
 }
 
+__global__ static void cuda_tran_gray(unsigned char *src,unsigned char* dst,int nWidth,int nHeight)
+{
+	int ImgHeight, ImgWidth;
+
+	ImgWidth = nWidth;
+	ImgHeight = nHeight;
+	uint8_t *  pDst8_t;
+	uint8_t *  pSrc8_t;
+
+	pSrc8_t = (uint8_t*)(src);
+	pDst8_t = (uint8_t*)(dst);
+
+	for(int y = 0; y < ImgHeight*ImgWidth; y++)
+	{
+		pDst8_t[y] = pSrc8_t[y*3+1];
+	}
+	
+}
+
 
 int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v,affine_param* apout)
 {
@@ -525,6 +544,34 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
         	s->QcifFp[i].ftv = 0x00;
     	}
 
+#if 0
+	cudaError_t cudaStatus;
+
+	unsigned char *dfcur = src.data;
+	unsigned char *src_gray = NULL;
+	unsigned char *dfcif = NULL;
+	unsigned char *dfcur_sobel = NULL;
+	unsigned char *dfcif_sobel= NULL;
+	unsigned char *dfqcif = NULL;
+	unsigned char *dfqcif_sobel= NULL;
+
+	cudaStatus = cudaMalloc((void**)&src_gray,sizeof(unsigned char)*nWidth*nHeight);
+	cuda_tran_gray<<<1,1,0>>>(src.data,src_gray, nWidth,nHeight);
+
+	cudaStatus = cudaMalloc((void**)&dfcur_sobel,s->i_height*s->i_width);
+	cudaStatus = cudaMalloc((void**)&dfcif, s->i_height>>1*s->i_width>>1);
+	cudaStatus = cudaMalloc((void**)&dfcif_sobel, s->i_height>>1*s->i_width>>1);
+	cudaStatus = cudaMalloc((void**)&dfqcif, s->i_height>>2*s->i_width>>2);
+	cudaStatus = cudaMalloc((void**)&dfqcif_sobel, s->i_height>>2*s->i_width>>2);
+	
+	//Sobel_cuda(src.data, dfcur_sobel, s->i_width, s->i_height);
+	//Sobel_cuda(dfcif, dfcif_sobel, s->i_width>>1, s->i_height>>1);
+	//Sobel_cuda(dfqcif, dfcif_sobel, s->i_width>>2, s->i_height>>2);
+
+
+	
+	
+#else
 	mfout = Mat(s->i_height, s->i_width, CV_8UC1);
 
 	mfcur = Mat(s->i_height, s->i_width, CV_8UC1, s->fD1Cur->buffer[0]);
@@ -555,8 +602,8 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
 
+#endif
 
-	
 
 	time[4] = OSA_getCurTimeInMsec();
 

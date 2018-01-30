@@ -22,7 +22,7 @@ public:
 
 public:
 	int creat();
-	int init();
+	HKalman init();
 	int destroy();
 	int run();
 

@@ -1,5 +1,5 @@
 
-#include "kalman.hpp"
+#include "kalman.hpp" 
 
 #define false  0
 #define true   1
@@ -170,7 +170,8 @@ void CKalman::MatrixCopy(float *A, float *B, int m, int n)
 }
 
 HKalman CKalman::KalmanOpen(int D, int M, int C)
-{
+{	
+printf("@@@@@@@@@@@@@@@@@@@@@@@kalmanopen@@@@n");
     HKalman hKalman =  (HKalman)malloc(sizeof(mKalman));	
     if (hKalman == MEM_ILLEGAL)
         return NULL;
@@ -189,7 +190,8 @@ HKalman CKalman::KalmanOpen(int D, int M, int C)
     hKalman->MP = M;
     hKalman->CP = C;
 
-    pSpace = (float*)malloc(sizeof(float)*1500);
+    pSpace = (float*)malloc(1500);
+    memset(pSpace,0,1500);
     float* tmpp = pSpace;
     unsigned int datablock = 0;
 
@@ -197,56 +199,57 @@ HKalman CKalman::KalmanOpen(int D, int M, int C)
     if (hKalman->state_pre == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * 1 ;
-    hKalman->state_post = &tmpp[datablock];
+    datablock += hKalman->DP *sizeof(float) ;
+    //hKalman->state_post = &tmpp[datablock];
+    hKalman->state_post =  (float*)malloc(hKalman->DP * 1*sizeof(float));
     if (hKalman->state_post == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * 1 ;
+    datablock += hKalman->DP * sizeof(float) ;
     hKalman->measure_param = &tmpp[datablock];
     if (hKalman->measure_param == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->MP * 1;
+    datablock += hKalman->MP * sizeof(float);
     hKalman->transition_matrix = &tmpp[datablock];
     if (hKalman->transition_matrix == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * hKalman->DP;
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
     hKalman->process_noise_cov = &tmpp[datablock];
     if (hKalman->process_noise_cov == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP *  hKalman->DP;
+    datablock += hKalman->DP *  hKalman->DP*sizeof(float);
     hKalman->measurement_matrix = &tmpp[datablock];
     if (hKalman->measurement_matrix == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->MP *  hKalman->DP ;
+    datablock += hKalman->MP *  hKalman->DP*sizeof(float) ;
     hKalman->measurement_noise_cov = &tmpp[datablock];
     if (hKalman->measurement_noise_cov == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->MP * hKalman->MP ;
+    datablock += hKalman->MP * hKalman->MP*sizeof(float) ;
     hKalman->error_cov_pre = &tmpp[datablock];
     if (hKalman->error_cov_pre == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * hKalman->DP ;
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
     hKalman->error_cov_post = &tmpp[datablock];
     if (hKalman->error_cov_post == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * hKalman->DP ;
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
     hKalman->gain = &tmpp[datablock];
     if (hKalman->gain == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * hKalman->MP ;
+    datablock += hKalman->DP * hKalman->MP*sizeof(float);
     if ( hKalman->CP > 0 )
     {
         hKalman->control_matrix = &tmpp[datablock];
-		datablock += hKalman->DP * hKalman->CP;
+		datablock += hKalman->DP * hKalman->CP*sizeof(float);
         if (hKalman->control_matrix == MEM_ILLEGAL)
             return NULL;
     }
@@ -255,96 +258,96 @@ HKalman CKalman::KalmanOpen(int D, int M, int C)
     if (hKalman->B_Uk == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * 1 ;
+    datablock += hKalman->DP*sizeof(float);
     hKalman->A_Pk = &tmpp[datablock];
     if (hKalman->A_Pk == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * hKalman->DP ;
+    datablock += hKalman->DP * hKalman->DP*sizeof(float) ;
     hKalman->A_T = &tmpp[datablock];
     if (hKalman->A_T == MEM_ILLEGAL)
         return NULL;
 
-    datablock += hKalman->DP * hKalman->DP;
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
     hKalman->APA_T = &tmpp[datablock];
     if (hKalman->APA_T == MEM_ILLEGAL)
         return NULL;
 
-	datablock +=  hKalman->DP *  hKalman->DP;
+	datablock +=  hKalman->DP *  hKalman->DP*sizeof(float);
     hKalman->H_T = &tmpp[datablock];
     if (hKalman->H_T == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->DP * hKalman->MP ;
+	datablock += hKalman->DP * hKalman->MP*sizeof(float);
     hKalman->Pk_Ht = &tmpp[datablock];
     if (hKalman->Pk_Ht == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->DP * hKalman->MP ;
+	datablock += hKalman->DP * hKalman->MP*sizeof(float);
     hKalman->Pk_Ht_R = &tmpp[datablock];
     if (hKalman->Pk_Ht_R == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * hKalman->MP ;
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
     hKalman->Pk_Ht_R_Inv = &tmpp[datablock];
     if (hKalman->Pk_Ht_R_Inv == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * hKalman->MP ;
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
     hKalman->H_Xk = &tmpp[datablock];
     if (hKalman->H_Xk == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * 1 ;
+	datablock += hKalman->MP *sizeof(float);
     hKalman->Kk_H_Xk = &tmpp[datablock];
     if (hKalman->Kk_H_Xk == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->DP * 1 ;
+	datablock += hKalman->DP *sizeof(float);
     hKalman->H_Pk = &tmpp[datablock];
     if (hKalman->H_Pk == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * hKalman->DP;
+	datablock += hKalman->MP * hKalman->DP*sizeof(float);
     hKalman->Kk_H_Pk = &tmpp[datablock];
     if (hKalman->Kk_H_Pk == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->DP * hKalman->DP ;
+	datablock += hKalman->DP * hKalman->DP*sizeof(float);
     hKalman->E_MUL_E = &tmpp[datablock];
     if (hKalman->E_MUL_E == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * hKalman->MP ;
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
     hKalman->E_Kt = &tmpp[datablock];
     if (hKalman->E_Kt == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * 1 ;
+	datablock += hKalman->MP *sizeof(float) ;
     hKalman->H_Pk_Ht = &tmpp[datablock];
     if (hKalman->H_Pk_Ht == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * hKalman->MP ;
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
     hKalman->K_T = &tmpp[datablock];
     if (hKalman->K_T == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->MP * hKalman->DP ;
+	datablock += hKalman->MP * hKalman->DP*sizeof(float);
     hKalman->K_E_MUL_E_Kt = &tmpp[datablock];
     if (hKalman->K_E_MUL_E_Kt == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->DP * hKalman->DP ;
+	datablock += hKalman->DP * hKalman->DP*sizeof(float);
     hKalman->Pk_SUB_A_Pk1_At = &tmpp[datablock];
     if (hKalman->Pk_SUB_A_Pk1_At == MEM_ILLEGAL)
         return NULL;
 
-	datablock += hKalman->DP * hKalman->DP ;
+	datablock += hKalman->DP * hKalman->DP*sizeof(float);
     hKalman->EE_SUB_HPkHt = &tmpp[datablock];
     if (hKalman->EE_SUB_HPkHt == MEM_ILLEGAL)
         return NULL;
-	datablock += hKalman->MP * hKalman->MP ;
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
     hKalman->m_bInited = true;
 
     return hKalman;
@@ -601,5 +604,473 @@ int CKalman::Kalman(HKalman hKalman, float *measure, float *control)
 	
     KalmanCorrect(hKalman, measure);
     return 0;
+}
+
+HKalman CKalman::init()
+{	
+    int i = 0;
+    int MP = 4;  //Kalman: number of measure vector dimensions
+    int DP = 8;  //Kalman: number of state   vector dimensions
+    int CP = 0;  //Kalman: number of control vector dimensions
+
+    HKalman hKalman =  (HKalman)malloc(sizeof(mKalman));	
+    if (hKalman == MEM_ILLEGAL)
+        return NULL;
+		
+    if ( DP <= 0 || MP <= 0 || CP < 0 )
+    {
+        OSA_printf("state and measurement vectors must have positive number of dimensions! \n");
+        return NULL;
+    }
+
+    hKalman->deltat = 0.04;
+    hKalman->b = 0.95;
+    hKalman->bK = 1;
+    hKalman->m_bInited = false;
+    hKalman->DP = DP;
+    hKalman->MP = MP;
+    hKalman->CP = CP;
+
+#if 0
+    pSpace = (unsigned char*)malloc(1500);
+    memset(pSpace,0,1500);
+    float* tmpp = pSpace;
+    unsigned int datablock = 0;
+
+    hKalman->state_pre = &tmpp[datablock];
+    if (hKalman->state_pre == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP *sizeof(float) ;
+    hKalman->state_post = &tmpp[datablock];
+    //hKalman->state_post =  (float*)malloc(hKalman->DP * 1*sizeof(float));
+    if (hKalman->state_post == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP * sizeof(float) ;
+    hKalman->measure_param = &tmpp[datablock];
+    if (hKalman->measure_param == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->MP * sizeof(float);
+    hKalman->transition_matrix = &tmpp[datablock];
+    if (hKalman->transition_matrix == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
+    hKalman->process_noise_cov = &tmpp[datablock];
+    if (hKalman->process_noise_cov == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP *  hKalman->DP*sizeof(float);
+    hKalman->measurement_matrix = &tmpp[datablock];
+    if (hKalman->measurement_matrix == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->MP *  hKalman->DP*sizeof(float) ;
+    hKalman->measurement_noise_cov = &tmpp[datablock];
+    if (hKalman->measurement_noise_cov == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->MP * hKalman->MP*sizeof(float) ;
+    hKalman->error_cov_pre = &tmpp[datablock];
+    if (hKalman->error_cov_pre == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
+    hKalman->error_cov_post = &tmpp[datablock];
+    if (hKalman->error_cov_post == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
+    hKalman->gain = &tmpp[datablock];
+    if (hKalman->gain == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP * hKalman->MP*sizeof(float);
+    if ( hKalman->CP > 0 )
+    {
+        hKalman->control_matrix = &tmpp[datablock];
+		datablock += hKalman->DP * hKalman->CP*sizeof(float);
+        if (hKalman->control_matrix == MEM_ILLEGAL)
+            return NULL;
+    }
+
+    hKalman->B_Uk = &tmpp[datablock];
+    if (hKalman->B_Uk == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP*sizeof(float);
+    hKalman->A_Pk = &tmpp[datablock];
+    if (hKalman->A_Pk == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP * hKalman->DP*sizeof(float) ;
+    hKalman->A_T = &tmpp[datablock];
+    if (hKalman->A_T == MEM_ILLEGAL)
+        return NULL;
+
+    datablock += hKalman->DP * hKalman->DP*sizeof(float);
+    hKalman->APA_T = &tmpp[datablock];
+    if (hKalman->APA_T == MEM_ILLEGAL)
+        return NULL;
+
+	datablock +=  hKalman->DP *  hKalman->DP*sizeof(float);
+    hKalman->H_T = &tmpp[datablock];
+    if (hKalman->H_T == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->DP * hKalman->MP*sizeof(float);
+    hKalman->Pk_Ht = &tmpp[datablock];
+    if (hKalman->Pk_Ht == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->DP * hKalman->MP*sizeof(float);
+    hKalman->Pk_Ht_R = &tmpp[datablock];
+    if (hKalman->Pk_Ht_R == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
+    hKalman->Pk_Ht_R_Inv = &tmpp[datablock];
+    if (hKalman->Pk_Ht_R_Inv == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
+    hKalman->H_Xk = &tmpp[datablock];
+    if (hKalman->H_Xk == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP *sizeof(float);
+    hKalman->Kk_H_Xk = &tmpp[datablock];
+    if (hKalman->Kk_H_Xk == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->DP *sizeof(float);
+    hKalman->H_Pk = &tmpp[datablock];
+    if (hKalman->H_Pk == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP * hKalman->DP*sizeof(float);
+    hKalman->Kk_H_Pk = &tmpp[datablock];
+    if (hKalman->Kk_H_Pk == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->DP * hKalman->DP*sizeof(float);
+    hKalman->E_MUL_E = &tmpp[datablock];
+    if (hKalman->E_MUL_E == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
+    hKalman->E_Kt = &tmpp[datablock];
+    if (hKalman->E_Kt == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP *sizeof(float) ;
+    hKalman->H_Pk_Ht = &tmpp[datablock];
+    if (hKalman->H_Pk_Ht == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
+    hKalman->K_T = &tmpp[datablock];
+    if (hKalman->K_T == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->MP * hKalman->DP*sizeof(float);
+    hKalman->K_E_MUL_E_Kt = &tmpp[datablock];
+    if (hKalman->K_E_MUL_E_Kt == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->DP * hKalman->DP*sizeof(float);
+    hKalman->Pk_SUB_A_Pk1_At = &tmpp[datablock];
+    if (hKalman->Pk_SUB_A_Pk1_At == MEM_ILLEGAL)
+        return NULL;
+
+	datablock += hKalman->DP * hKalman->DP*sizeof(float);
+    hKalman->EE_SUB_HPkHt = &tmpp[datablock];
+    if (hKalman->EE_SUB_HPkHt == MEM_ILLEGAL)
+        return NULL;
+	datablock += hKalman->MP * hKalman->MP*sizeof(float);
+    hKalman->m_bInited = true;
+#else
+	hKalman->state_pre = NULL;
+	if(hKalman->state_pre == NULL){
+	  hKalman->state_pre =  (float*)malloc(hKalman->DP * 1*sizeof(float));
+	  memset( hKalman->state_pre ,  0 , hKalman->DP * 1*sizeof(float) );
+	}
+	//hKalman->state_pre = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * 1 * sizeof(float), 8);
+	if (hKalman->state_pre == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->state_post = NULL;
+	if(hKalman->state_post == NULL){
+	  hKalman->state_post = (float*)malloc(hKalman->DP * 1*sizeof(float));
+	  memset( hKalman->state_post , 0 , hKalman->DP * 1*sizeof(float) );
+	}
+	//hKalman->state_post = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * 1 * sizeof(float), 8);
+	if (hKalman->state_post == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->measure_param = NULL;
+	if (hKalman->measure_param == NULL){
+		hKalman->measure_param =  (float*)malloc(hKalman->MP * 1*sizeof(float));
+		 memset( hKalman->measure_param , 0 , hKalman->MP * 1*sizeof(float) );
+	}
+	//hKalman->measure_param = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * 1 * sizeof(float), 8);
+	if (hKalman->measure_param == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->transition_matrix = NULL;
+	if(hKalman->transition_matrix == NULL){
+	  hKalman->transition_matrix =  (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->transition_matrix , 0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->transition_matrix = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->transition_matrix == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->process_noise_cov = NULL;
+	if(hKalman->process_noise_cov == NULL){
+	  hKalman->process_noise_cov = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->process_noise_cov , 0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->process_noise_cov = (float*)MEM_calloc(&hKalman->memId, hKalman->DP *  hKalman->DP * sizeof(float), 8);
+	if (hKalman->process_noise_cov == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->measurement_matrix = NULL;
+	if(hKalman->measurement_matrix == NULL){
+	  hKalman->measurement_matrix = (float*)malloc(hKalman->MP * hKalman->DP*sizeof(float));
+	  memset( hKalman->measurement_matrix, 0, hKalman->MP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->measurement_matrix = (float*)MEM_calloc(&hKalman->memId, hKalman->MP *  hKalman->DP * sizeof(float), 8);
+	if (hKalman->measurement_matrix == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->measurement_noise_cov = NULL;
+	if(hKalman->measurement_noise_cov == NULL){
+	  hKalman->measurement_noise_cov =  (float*)malloc(hKalman->MP * hKalman->MP*sizeof(float));
+	  memset( hKalman->measurement_noise_cov , 0 , hKalman->MP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->measurement_noise_cov = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->measurement_noise_cov == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->error_cov_pre = NULL;
+	if(hKalman->error_cov_pre == NULL){
+	  hKalman->error_cov_pre = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->error_cov_pre , 0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->error_cov_pre = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->error_cov_pre == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->error_cov_post = NULL;
+	if(hKalman->error_cov_post == NULL){
+	  hKalman->error_cov_post = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->error_cov_post , 0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->error_cov_post = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->error_cov_post == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->gain = NULL;
+	if(hKalman->gain == NULL){
+	  hKalman->gain = (float*)malloc(hKalman->DP * hKalman->MP*sizeof(float));
+	  memset( hKalman->gain , 0 , hKalman->DP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->gain = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->gain == MEM_ILLEGAL)
+		return NULL;
+
+	if( hKalman->CP > 0 )
+	{
+	  hKalman->control_matrix = NULL;
+	  if(hKalman->control_matrix == NULL){
+	      hKalman->control_matrix = (float*)malloc(hKalman->DP * hKalman->CP*sizeof(float));
+	      memset( hKalman->control_matrix , 0 , hKalman->DP * hKalman->CP*sizeof(float) );
+	  }
+	}
+	hKalman->B_Uk = NULL;
+	if(hKalman->B_Uk == NULL){
+	  hKalman->B_Uk  = (float*)malloc(hKalman->DP * 1*sizeof(float));
+	  memset( hKalman->B_Uk ,  0 , hKalman->DP * 1 *sizeof(float) );
+	}
+	//hKalman->B_Uk = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * 1 * sizeof(float), 8);
+	if (hKalman->B_Uk == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->A_Pk = NULL;
+	if(hKalman->A_Pk == NULL){
+	  hKalman->A_Pk  = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->A_Pk ,  0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->A_Pk = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->A_Pk == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->A_T = NULL;
+	if(hKalman->A_T == NULL){
+	  hKalman->A_T   = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->A_T ,  0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->A_T = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->A_T == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->APA_T = NULL;
+	if(hKalman->APA_T == NULL){
+	  hKalman->APA_T = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->APA_T ,  0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->APA_T = (float*)MEM_calloc(&hKalman->memId, hKalman->DP *  hKalman->DP * sizeof(float), 8);
+	if (hKalman->APA_T == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->H_T = NULL;
+	if(hKalman->H_T == NULL){
+	  hKalman->H_T       = (float*)malloc(hKalman->DP * hKalman->MP*sizeof(float));
+	  memset( hKalman->H_T ,  0 , hKalman->DP * hKalman->MP*sizeof(float));
+	}
+	//hKalman->H_T = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->H_T == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->Pk_Ht = NULL;
+	if(hKalman->Pk_Ht == NULL){
+	  hKalman->Pk_Ht     = (float*)malloc(hKalman->DP * hKalman->MP*sizeof(float));
+	  memset( hKalman->Pk_Ht ,  0 , hKalman->DP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->Pk_Ht = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->Pk_Ht == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->Pk_Ht_R = NULL;
+	if(hKalman->Pk_Ht_R == NULL){
+	  hKalman->Pk_Ht_R   = (float*)malloc(hKalman->MP * hKalman->MP*sizeof(float));
+	  memset( hKalman->Pk_Ht_R ,  0 , hKalman->MP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->Pk_Ht_R = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->Pk_Ht_R == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->Pk_Ht_R_Inv = NULL;
+	if(hKalman->Pk_Ht_R_Inv == NULL){
+	  hKalman->Pk_Ht_R_Inv = (float*)malloc(hKalman->MP * hKalman->MP*sizeof(float));
+	  memset( hKalman->Pk_Ht_R_Inv ,  0 , hKalman->MP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->Pk_Ht_R_Inv = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->Pk_Ht_R_Inv == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->H_Xk = NULL;
+	if(hKalman->H_Xk == NULL){
+	  hKalman->H_Xk      = (float*)malloc(hKalman->MP *  1*sizeof(float));
+	  memset( hKalman->H_Xk ,  0 , hKalman->MP *  1*sizeof(float) );
+	}
+	//hKalman->H_Xk = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * 1 * sizeof(float), 8);
+	if (hKalman->H_Xk == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->Kk_H_Xk = NULL;
+	if(hKalman->Kk_H_Xk == NULL){
+	  hKalman->Kk_H_Xk   = (float*)malloc(hKalman->DP *  1*sizeof(float));
+	  memset( hKalman->Kk_H_Xk ,  0 , hKalman->DP *  1*sizeof(float) );
+	}
+	//hKalman->Kk_H_Xk = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * 1 * sizeof(float), 8);
+	if (hKalman->Kk_H_Xk == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->H_Pk = NULL;
+	if(hKalman->H_Pk == NULL){
+	  hKalman->H_Pk      = (float*)malloc(hKalman->MP * hKalman->DP *sizeof(float));
+	  memset( hKalman->H_Pk ,  0 , hKalman->MP * hKalman->DP *sizeof(float) );
+	}
+	//hKalman->H_Pk = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->H_Pk == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->Kk_H_Pk = NULL;
+	if(hKalman->Kk_H_Pk == NULL){
+	  hKalman->Kk_H_Pk   = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->Kk_H_Pk ,  0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->Kk_H_Pk = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->Kk_H_Pk == MEM_ILLEGAL)
+		return NULL;
+
+	///////////////////////////////////////////////////////////////////////////////
+	///////
+	hKalman->E_MUL_E = NULL;
+	if(hKalman->E_MUL_E == NULL){
+	  hKalman->E_MUL_E   = (float*)malloc(hKalman->MP * hKalman->MP*sizeof(float));
+	  memset( hKalman->E_MUL_E ,  0 , hKalman->MP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->E_MUL_E = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->E_MUL_E == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->E_Kt = NULL;
+	if(hKalman->E_Kt == NULL){
+	  hKalman->E_Kt   = (float*)malloc(hKalman->MP * 1*sizeof(float));
+	  memset( hKalman->E_Kt ,  0 , hKalman->MP * 1 *sizeof(float) );
+	}
+	//hKalman->E_Kt = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * 1 * sizeof(float), 8);
+	if (hKalman->E_Kt == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->H_Pk_Ht = NULL;
+	if(hKalman->H_Pk_Ht == NULL){
+	  hKalman->H_Pk_Ht   = (float*)malloc(hKalman->MP * hKalman->MP*sizeof(float));
+	  memset( hKalman->H_Pk_Ht ,  0 , hKalman->MP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->H_Pk_Ht = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->H_Pk_Ht == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->K_T = NULL;
+	if(hKalman->K_T == NULL){
+	  hKalman->K_T   = (float*)malloc(hKalman->MP * hKalman->DP*sizeof(float));
+	  memset( hKalman->K_T ,  0 , hKalman->MP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->K_T = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->K_T == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->K_E_MUL_E_Kt = NULL;
+	if(hKalman->K_E_MUL_E_Kt == NULL){
+	  hKalman->K_E_MUL_E_Kt   = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->K_E_MUL_E_Kt ,  0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+	//hKalman->K_E_MUL_E_Kt = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->K_E_MUL_E_Kt == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->Pk_SUB_A_Pk1_At = NULL;
+	if(hKalman->Pk_SUB_A_Pk1_At == NULL){
+	  hKalman->Pk_SUB_A_Pk1_At   = (float*)malloc(hKalman->DP * hKalman->DP*sizeof(float));
+	  memset( hKalman->Pk_SUB_A_Pk1_At ,  0 , hKalman->DP * hKalman->DP*sizeof(float) );
+	}
+
+	//hKalman->Pk_SUB_A_Pk1_At = (float*)MEM_calloc(&hKalman->memId, hKalman->DP * hKalman->DP * sizeof(float), 8);
+	if (hKalman->Pk_SUB_A_Pk1_At == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->EE_SUB_HPkHt = NULL;
+	if (hKalman->EE_SUB_HPkHt == NULL)
+	{
+	  hKalman->EE_SUB_HPkHt   = (float*)malloc(hKalman->MP * hKalman->MP*sizeof(float));
+	  memset( hKalman->EE_SUB_HPkHt ,  0 , hKalman->MP * hKalman->MP*sizeof(float) );
+	}
+	//hKalman->EE_SUB_HPkHt = (float*)MEM_calloc(&hKalman->memId, hKalman->MP * hKalman->MP * sizeof(float), 8);
+	if (hKalman->EE_SUB_HPkHt == MEM_ILLEGAL)
+		return NULL;
+
+	hKalman->m_bInited = true;
+
+#endif
+
+
+    return hKalman;
+
 }
 

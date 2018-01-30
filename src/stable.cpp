@@ -5,6 +5,7 @@
 #include "preprocess.hpp"
 #include "MotionFilter.hpp"
 #include "motionCompensate.hpp"
+#include "cuda_runtime_api.h"
 
 //int numStableObj = 0;
 CStability* pStableObj = NULL;
@@ -252,13 +253,13 @@ void CStability::init()
 
 void CStability::OpenStabilize(stb_t* s)
 {
-    int i = 0;
-    int MP = 4;  //Kalman: number of measure vector dimensions
-    int DP = 8;  //Kalman: number of state   vector dimensions
-    int CP = 0;  //Kalman: number of control vector dimensions
-
+    //int i = 0;
+    //int MP = 4;  //Kalman: number of measure vector dimensions
+    //int DP = 8;  //Kalman: number of state   vector dimensions
+    //int CP = 0;  //Kalman: number of control vector dimensions
+   s->g_pKalman = kkalman.init();
     /*Kalman Filter Init*/
-    s->g_pKalman = kkalman.KalmanOpen(DP, MP, CP);
+   //s->g_pKalman = kkalman.KalmanOpen(DP, MP, CP);
     if (s->g_pKalman == NULL)
     {
         return ;
@@ -275,6 +276,40 @@ void CStability::allocspace()
 	unsigned int datablock = imgw*imgh*1;
 
 	stb_t* ms = tss;
+	
+	#if 0
+
+	cudaError_t cudaStatus;
+
+	ms->fD1Cur = new stb_frame_t();
+	ms->fD1Out = new stb_frame_t();
+
+	cudaStatus = cudaMalloc((void**)&ms->fD1Cur->buffer[0], datablock);
+	cudaStatus = cudaMalloc((void**)&ms->fD1Out->buffer[0], datablock);
+
+	cudaStatus = cudaMalloc((void**)&ms->fD1Ref, datablock);
+	cudaStatus = cudaMalloc((void**)&ms->fD1CurSobel, datablock);
+	cudaStatus = cudaMalloc((void**)&ms->fD1RefSobel, datablock);
+	
+	cudaStatus = cudaMalloc((void**)&ms->fCifCur, datablock>>2);
+	cudaStatus = cudaMalloc((void**)&ms->fCifRef, datablock>>2);
+	cudaStatus = cudaMalloc((void**)&ms->fCifCurSobel, datablock>>2);
+	cudaStatus = cudaMalloc((void**)&ms->fCifRefSobel, datablock>>2);
+
+	cudaStatus = cudaMalloc((void**)&ms->fQcifCur, datablock>>4);
+	cudaStatus = cudaMalloc((void**)&ms->fQcifRef, datablock>>4);
+	cudaStatus = cudaMalloc((void**)&ms->fQcifCurSobel, datablock>>4);
+	cudaStatus = cudaMalloc((void**)&ms->fQcifRefSobel, datablock>>4);
+	
+
+	ms->D1Fp = new FPOINT[(MAX_WIDTH>>2)*(MAX_HEIGHT>>2)];
+	ms->CifFp = new FPOINT[(MAX_WIDTH>>2)*(MAX_HEIGHT>>2)];
+	ms->QcifFp = new FPOINT[(MAX_WIDTH>>2)*(MAX_HEIGHT>>2)];
+
+	m_modify = new affine_param();
+	
+	#else
+
 	ms->fD1Cur = new stb_frame_t();
 	ms->fD1Out = new stb_frame_t();
 	
@@ -300,6 +335,8 @@ void CStability::allocspace()
 	ms->QcifFp = new FPOINT[(MAX_WIDTH>>2)*(MAX_HEIGHT>>2)];
 
 	m_modify = new affine_param();
+	#endif
+	
 	return ;
 }
 
@@ -427,6 +464,26 @@ void CStability::showPoints(unsigned char code)
 	return ;
 }
 
+void extractUYVY2Gray(Mat src, Mat dst)
+{
+	int ImgHeight, ImgWidth,ImgStride;
+
+	ImgWidth = src.cols;
+	ImgHeight = src.rows;
+	ImgStride = ImgWidth*2;
+	uint8_t  *  pDst8_t;
+	uint8_t *  pSrc8_t;
+
+	pSrc8_t = (uint8_t*)(src.data);
+	pDst8_t = (uint8_t*)(dst.data);
+//#pragma UNROLL 4
+//#pragma omp parallel for
+	for(int y = 0; y < ImgHeight*ImgWidth; y++)
+	{
+		pDst8_t[y] = pSrc8_t[y*3+1];
+	}
+}
+
 
 int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v)
 {
@@ -438,27 +495,8 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	int ttt,nnn = 0;
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
-	mfout = Mat(s->i_height, s->i_width, CV_8UC1);
-
-	mfcur = Mat(s->i_height, s->i_width, CV_8UC1, s->fD1Cur->buffer[0]);
-	mfCifCur = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifCur);
-	mfQcifCur = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifCur);
-
-	mfcur_sobel = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1CurSobel);
-	mfCifCur_sobel = Mat(s->i_height>>1,s->i_width>>1, CV_8UC1,s->fCifCurSobel);
-	mfQCifCur_sobel = Mat(s->i_height>>2,s->i_width>>2, CV_8UC1,s->fQcifCurSobel);	
-
-	mfCur_ref = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Ref);
-	mfCifCur_ref = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifRef);
-	mfQCifCur_ref = Mat(s->i_height>>2,s->i_width>>2, CV_8UC1,s->fQcifRef);
-
-	mfcur_sobel_ref = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1RefSobel);
-	mfCifCur_sobel_ref = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifRefSobel);
-	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
-
-	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
-	src.copyTo(mfcur);
-
+	//printf("channels = %d\n",src.channels());
+	
 	if(nWidth == 1920)
 	{
 		edge_h = cedge_h / s->grid_w ;
@@ -485,6 +523,31 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
        	s->CifFp[i].ftv = 0x00;
         	s->QcifFp[i].ftv = 0x00;
     	}
+
+	mfout = Mat(s->i_height, s->i_width, CV_8UC1);
+
+	mfcur = Mat(s->i_height, s->i_width, CV_8UC1, s->fD1Cur->buffer[0]);
+	mfCifCur = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifCur);
+	mfQcifCur = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifCur);
+
+	mfcur_sobel = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1CurSobel);
+	mfCifCur_sobel = Mat(s->i_height>>1,s->i_width>>1, CV_8UC1,s->fCifCurSobel);
+	mfQCifCur_sobel = Mat(s->i_height>>2,s->i_width>>2, CV_8UC1,s->fQcifCurSobel);	
+
+	mfCur_ref = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Ref);
+	mfCifCur_ref = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifRef);
+	mfQCifCur_ref = Mat(s->i_height>>2,s->i_width>>2, CV_8UC1,s->fQcifRef);
+
+	mfcur_sobel_ref = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1RefSobel);
+	mfCifCur_sobel_ref = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifRefSobel);
+	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
+
+	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
+	//src.copyTo(mfcur);
+	Mat tmp = Mat(576,720,CV_8UC3);
+	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
+	extractUYVY2Gray(tmp,mfcur);
+
 
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
@@ -530,11 +593,22 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);		
 
 		AnalysisMeResult(cs);
-		
+	
 		MotionFilter(cs);
 
-		MotionProcess(cs,mfcur,dst,mode);
-		
+		//MotionProcess(cs,mfcur,mfout,mode);
+		//cudaMemcpy(dst.data, mfout.data, s->i_height*s->i_width, cudaMemcpyHostToDevice);
+
+
+		MotionProcess(cs, src,dst,mode);
+		Mat mattmp = Mat(576,720,CV_8UC3);
+		cudaMemcpy(mattmp.data, dst.data, s->i_height*s->i_width*3, cudaMemcpyDeviceToHost);
+//printf("imshow\n");
+imshow("mfoutmfout",mattmp);
+//waitKey(0);
+//return 0;
+
+
 	    FRAME_EXCHANGE(s->fD1Ref,s->fD1Cur->buffer[0]);	
 	    FRAME_EXCHANGE(s->fD1RefSobel, mfcur_sobel.data);
 	    FRAME_EXCHANGE(s->fCifRef,      mfCifCur.data);

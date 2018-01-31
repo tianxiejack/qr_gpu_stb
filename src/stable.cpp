@@ -482,7 +482,7 @@ void extractUYVY2Gray(Mat src, Mat dst)
 	pSrc8_t = (uint8_t*)(src.data);
 	pDst8_t = (uint8_t*)(dst.data);
 //#pragma UNROLL 4
-//#pragma omp parallel for
+	#pragma omp parallel for
 	for(int y = 0; y < ImgHeight*ImgWidth; y++)
 	{
 		pDst8_t[y] = pSrc8_t[y*3+1];
@@ -582,11 +582,11 @@ printf("444444444444444444444\n");
 	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
 
 	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
-	src.copyTo(mfcur);
-	//Mat tmp = Mat(576,720,CV_8UC3);
-	//cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
-	//extractUYVY2Gray(tmp,mfcur);
-
+	//src.copyTo(mfcur);
+	Mat tmp = Mat(576,720,CV_8UC3);
+	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
+	extractUYVY2Gray(tmp,mfcur);
+	
 	time[3] = OSA_getCurTimeInMsec();
 
 	/*	pre-process	*/
@@ -599,6 +599,9 @@ printf("444444444444444444444\n");
 	/*  init the param of kalman	 */
 	if(s->bReset)
 	{
+		time[0] = 0;
+		time[3] = 0;
+
 		s->bReset = 0;
 		InitFilter(&(s->last_af),ap_modify,&(s->flt));
 		kkalman.KalmanInitParam(s->g_pKalman, 0.0, 0.0, 0.0, 1.0, 0.0);
@@ -630,11 +633,13 @@ printf("444444444444444444444\n");
 				mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel);
 
 		time[6] = OSA_getCurTimeInMsec();
-		time[7] = 0;
-		time[8] = 0;
+
 		/*		此处待添加调试  FTP_SHOW		*/
 		if (s->QcifFpNum < 3) //特征点太少
 		{
+			time[7] = 0;
+			time[8] = 0;
+			
 			MeErr_qcif = 10;
 			MeErr_cif = 10;
 			MeErr = 10;
@@ -742,7 +747,7 @@ void CStability::analytime()
 	
 	if(anytimenum == 0)
 	{
-		memset(anytime,0,20*sizeof(unsigned int));
+		memset(anytime,0,20*sizeof(unsigned long));
 		memset(mintime,10000,20*sizeof(unsigned int));
 		memset(maxtime,0,20*sizeof(unsigned int));
 		matime = 0;

@@ -9,7 +9,10 @@ extern "C" void RotImgProgress_uyvy_cuda(unsigned char *src, unsigned char *dst,
 								float cos, float sin, float dx, float dy,
 								int src_width, int src_height,
 								int dst_width, int dst_height);
-
+extern "C" void RotImgProgress_cuda(unsigned char *src, unsigned char *dst, 
+								float cos, float sin, float dx, float dy,
+								int src_width, int src_height, 
+								int dst_width, int dst_height);
 
 
 void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,float s_cos,float s_sin,float dx,float dy)
@@ -117,11 +120,14 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
    	   	   default:
    	   		   	   break;
    }
-	cos = 1.0;sin = 0.0;dx = 0.0;dy = 0.0;
-	RotImg(src.data,dst.data,s->i_width,s->i_height,cos,sin,dx,dy);
+	//cos = 1.0;sin = 0.0;dx = 0.0;dy = 0.0;
+	//RotImg(src.data,dst.data,s->i_width,s->i_height,cos,sin,dx,dy);
 
-	//RotImgProgress_uyvy_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height, s->i_width, s->i_height);
 	
+	RotImgProgress_uyvy_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height, s->i_width, s->i_height);
+	
+	//RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height, s->i_width, s->i_height);
+
 }
 
 

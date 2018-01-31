@@ -33,7 +33,7 @@ public:
 
 public:
 	unsigned int time[20];
-	 unsigned int anytime[20] = {0};
+	 unsigned long anytime[20] = {0};
 	 unsigned int anytimenum = 0;
 	 unsigned int mintime[20];
 	 unsigned int maxtime[20] = {0};

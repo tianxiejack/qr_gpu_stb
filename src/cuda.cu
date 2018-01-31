@@ -133,6 +133,44 @@ __global__ void kernel_RotImgProgress_gray(unsigned char *src, unsigned char *ds
 }
 
 
+__global__ void kernel_RotImgProgress_(unsigned char *src, unsigned char *dst, 
+								float cos, float sin, float dx, float dy,
+								int src_width, int src_height, 
+								int dst_width, int dst_height)
+{
+	const int x = blockDim.x * blockIdx.x + threadIdx.x;
+	const int y = blockDim.y * blockIdx.y + threadIdx.y;
+
+
+	float a, b , c, d;
+	float x2, y2;
+	int yi, xi;
+	float detx, dety;
+
+	a = cos;
+	b = sin;
+	c = dx;
+	d = dy;
+
+	x2 = a*x - b*y + c;
+	y2 = b*x + a*y + d;
+
+	if(x2>=0 && x2<dst_width && y2>=0 && y2<dst_height)
+	{
+		xi = (int)x2;
+		yi = (int)y2;
+		detx = x2-xi;
+		dety = y2-yi;
+		dst[y*dst_width + x] = (unsigned char)(0.5 + (src[yi*dst_width + xi]*(1-dety) + src[(yi+1)*dst_width + xi]*dety)*(1-detx) +
+								(src[yi*dst_width + xi + 1]*(1-dety) + src[(yi+1)*dst_width + xi + 1]*dety)*detx);
+	}
+	else
+	{
+		dst[y*dst_width + x] = 0;
+	}
+}
+
+
 
 __global__ void kernel_RotImgProgress_uyvy(unsigned char *src, unsigned char *dst,
 								float cos, float sin, float dx, float dy,
@@ -232,7 +270,19 @@ extern "C" void tran_gray_cuda(unsigned char *src,unsigned char* dst,int nWidth,
 
 
 
+extern "C" void RotImgProgress_cuda(unsigned char *src, unsigned char *dst, 
+								float cos, float sin, float dx, float dy,
+								int src_width, int src_height, 
+								int dst_width, int dst_height)
+{
 
+	dim3 block((src_width+31)/32, (src_height+31)/32);
+	dim3 thread(32,32);
+	kernel_RotImgProgress_<<<block, thread>>>(src, dst, 
+							cos, sin, dx, dy,
+							src_width, src_height, dst_width, dst_height);
+
+}
 
 
 

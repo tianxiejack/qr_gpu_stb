@@ -11,7 +11,7 @@
 //#include <smmintrin.h>
 #include <arm_neon.h>
 #include "sse2neon.hpp"
-
+#include "osa.h"
 
 void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int pitch,int sx, int sy,unsigned int * match)                                                              
 {                                                              
@@ -45,6 +45,7 @@ void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int p
 				int srcPtr = j*pitch;
 				int refPtr = (j+y)*pitch + x;
 
+				#if 1
 				__m128i _a128,_b128,rslt;
 
 				_a128 = _mm_loadl_epi64((__m128i*)(srcImg + srcPtr));
@@ -53,7 +54,27 @@ void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int p
 				//_acc[j] = _mm_extract_epi32(rslt,0)
 				// extern int _mm_extract_epi32(_m128i src,const int ndx);
 				_acc[j] = vgetq_lane_u16((uint16x8_t)rslt,0);
-			//	_mm_empty();
+				//_mm_empty();
+				#else
+
+				uint8x8_t _a,_b,rslt;
+
+				_a = vld1_u8((const uint8_t*)(srcImg + srcPtr));
+				_b = vld1_u8((const uint8_t*)(refImg + refPtr));
+				rslt = vabd_u8(_a,_b);
+				//uint8_t vget_lane_u8 (uint8x8_t __a, const int __b)\u037e
+	
+				_acc[j] += vget_lane_u8(rslt,0);
+				_acc[j] += vget_lane_u8(rslt,1);
+				_acc[j] += vget_lane_u8(rslt,2);
+				_acc[j] += vget_lane_u8(rslt,3);
+				_acc[j] += vget_lane_u8(rslt,4);
+				_acc[j] += vget_lane_u8(rslt,5);
+				_acc[j] += vget_lane_u8(rslt,6);
+				_acc[j] += vget_lane_u8(rslt,7);
+				
+				
+				#endif
 			}
 			acc = (_acc[0] + _acc[1] + _acc[2] + _acc[3] + _acc[4] + _acc[5] + _acc[6] + _acc[7]);
 	#endif
@@ -521,12 +542,12 @@ void SetD1FpPmvFromAp(FPOINT *CifFp, int CifFpNum, FPOINT *D1Fp, affine_param *p
 void RunMatchingPoint(stb_t* s,int* MeErr,int* MeErr_cif,int *MeErr_qcif)
 {
 	stb_t *ms = s;
-	
+	unsigned int t1 =  OSA_getCurTimeInMsec();
 	 /*在QCIF图像上做运动搜索*/
 	GetAllMvRefine(ms->QcifFp,ms->QcifFpNum,ms->fQcifCur,ms->fQcifRef,ms->i_width>>2,ms->i_height>>2,32,32);
-
+	unsigned int t2 =  OSA_getCurTimeInMsec();
 	*MeErr_qcif = GetMoveParam(&(ms->ap_qcif),ms->QcifFp,ms->QcifFpNum,ms->fQcifCur);
-
+	unsigned int t3 =  OSA_getCurTimeInMsec();
     /*把QCIF的特征点映射到CIF上，从而获得CIF图像的特征点，并依据QCIF的运动搜索对CIF图像各特征点的运动做预计。*/
 	if (*MeErr_qcif)
 	{
@@ -536,11 +557,12 @@ void RunMatchingPoint(stb_t* s,int* MeErr,int* MeErr_cif,int *MeErr_qcif)
 	{
 		SetCifFpPmvFromAp(ms->QcifFp, ms->QcifFpNum, ms->CifFp, &ms->ap_qcif);
 	}
-
+	unsigned int t4 = OSA_getCurTimeInMsec();
 	/*在CIF图像上做运动搜索*/
     GetAllMvRefine(ms->CifFp, ms->CifFpNum, ms->fCifCur, ms->fCifRef,ms->i_width >> 1, ms->i_height >> 1, 16, 16);
+	unsigned int t5 =  OSA_getCurTimeInMsec();
     *MeErr_cif = GetMoveParam(&(ms->ap_cif), ms->CifFp, ms->CifFpNum, ms->fCifCur);
-
+	unsigned int t6 =  OSA_getCurTimeInMsec();
     /*把CIF的特征点映射到D1上，从而获得D1图像的特征点，并依据CIF的运动搜索对D1图像各特征点的运动做预计*/
     if (*MeErr_cif)
     {
@@ -550,11 +572,18 @@ void RunMatchingPoint(stb_t* s,int* MeErr,int* MeErr_cif,int *MeErr_qcif)
     {
         SetD1FpPmvFromAp(ms->CifFp, ms->CifFpNum, ms->D1Fp, &ms->ap_cif);
     }
-
+	unsigned int t7 =  OSA_getCurTimeInMsec();
     /* 在D1图像上做运动搜索*/
     GetAllMvRefine(ms->D1Fp, ms->D1FpNum, ms->fD1Cur->buffer[0],ms->fD1Ref, ms->i_width, ms->i_height, 16, 16);
+	unsigned int t8 =  OSA_getCurTimeInMsec();
+	
     /*计算运动模型参数，并剔除奇异点(产生奇异点的原因，主要是局部运动，运动估计错误等)*/
     *MeErr = GetMoveParam(&(ms->cur_af), ms->D1Fp, ms->D1FpNum,ms->fD1Cur->buffer[0]);
+	unsigned int t9 =  OSA_getCurTimeInMsec();
 
+	//printf("\nt2-t1 time : %u\n",t2-t1);
+	//printf("t5-t4 time : %u\n",t5-t4);
+	//printf("t8-t7 time : %u\n",t8-t7);
+	
     return;
 }

@@ -15,7 +15,7 @@
 #include "cuda_runtime_api.h"
 #include <device_launch_parameters.h>
 
-extern "C" void Sobel_cuda(unsigned char *src, unsigned char *dst, int width, int height);
+//extern "C" void Sobel_cuda(unsigned char *src, unsigned char *dst, int width, int height);
 
 using namespace cv;
 
@@ -161,7 +161,8 @@ static void SUB_IMG_sobel(const unsigned char* in, unsigned char* out,short cols
 void IMG_sobel2(const unsigned char* in, unsigned char* out,short cols, short rows)
 {
 	int i;
-	unsigned int t1 = OSA_getCurTimeInMsec();
+
+	//unsigned int t1 = OSA_getCurTimeInMsec();
 
 	#pragma omp parallel for num_threads (4)
 	for(i=0; i<8; i++){
@@ -174,7 +175,7 @@ void IMG_sobel2(const unsigned char* in, unsigned char* out,short cols, short ro
 			SUB_IMG_sobel(pin, pout, cols, rows/8);
 		}
 	}
-	printf("####elaspe : %u\n",OSA_getCurTimeInMsec() - t1 );
+	//printf("####elaspe : %u\n",OSA_getCurTimeInMsec() - t1 );
 }
 
 void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short rows)
@@ -208,7 +209,8 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
 		//int i;    	/* Input pixel offset                     */
               //int o;   	/* Output pixel offset.                   */
               int xy;   	/* Loop counter.                          */
-		unsigned int t1 = OSA_getCurTimeInMsec();
+		//unsigned int t1 = OSA_getCurTimeInMsec();
+		
          	// for ((xy = 0, i = cols + 1, o = 1);(xy < cols*(rows-2) - 2);(xy++, i++, o++))
          	#pragma omp parallel for
          	for(xy = 0;xy<cols*(rows-2)-2;xy++)
@@ -261,7 +263,7 @@ void IMG_sobel(const unsigned char* in, unsigned char* out,short cols, short row
                   /* -------------------------------------------- */
                   out[xy+1] = O;
               }
-		printf("####elaspe : %u\n",OSA_getCurTimeInMsec() - t1 );
+		//printf("####elaspe : %u\n",OSA_getCurTimeInMsec() - t1 );
  }
 
 #endif
@@ -293,18 +295,18 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 
 	
 	/*	 pyramid		*/
-	timepoint[0] = OSA_getCurTimeInMsec();
+	//timepoint[0] = OSA_getCurTimeInMsec();
 	pyramid_cv(fcur,cifCur,QcifCur,s);
-	timepoint[1] = OSA_getCurTimeInMsec();
-	
+	//timepoint[1] = OSA_getCurTimeInMsec();
+	//printf("sssssssssssssssss:%d\n",timepoint[1] - timepoint[0]);
 
 	#if 1
 	/*		sobel 	*/
-	printf("******begin*********\n");
+	//printf("******begin*********\n");
 	IMG_sobel2(fcur.data, fCurSobel.data,fcur.cols, fcur.rows);
 	IMG_sobel2(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);
 	IMG_sobel(QcifCur.data, QcifCurSobel.data,QcifCur.cols, QcifCur.rows);
-	printf("******end*********\n");
+	//printf("******end*********\n");
 
 	//Sobel(fcur,fCurSobel,fcur.depth(),1,1);
 	//Sobel(cifCur,cifCurSobel,fcur.depth(),1,1);
@@ -349,9 +351,9 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 	cudaStatus = cudaMemcpy(cifCurSobel.data, dfcif_sobel, byteCount_cif, cudaMemcpyDeviceToHost);
 
 	#endif
-	timepoint[2] = OSA_getCurTimeInMsec();
+	//timepoint[2] = OSA_getCurTimeInMsec();
 	
-	analytime();
+	//analytime();
 
 	return ;
 }

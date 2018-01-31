@@ -6,11 +6,12 @@
 #include "MotionFilter.hpp"
 #include "motionCompensate.hpp"
 #include "cuda_runtime_api.h"
+#include "cuda_runtime.h"
 
 #include <unistd.h>
 //int numStableObj = 0;
 CStability* pStableObj = NULL;
-#define DEBUGTIME 	500
+#define DEBUGTIME 	100
 /*
 *待添加
 *1.稳像区域接口
@@ -26,7 +27,10 @@ CStability* pStableObj = NULL;
 *	0x02： 旋转抖动校正
 *	0x03： Zoom抖动校正
 */
+extern "C" void tran_gray_cuda(unsigned char *src,unsigned char* dst,int nWidth,int nHeight);
+extern "C" void Sobel_cuda(unsigned char *src, unsigned char *dst, int width, int height);
 
+static unsigned int matime =0 ;
 void Create_stable(void)
 {
 	#if 0
@@ -485,24 +489,6 @@ void extractUYVY2Gray(Mat src, Mat dst)
 	}
 }
 
-__global__ static void cuda_tran_gray(unsigned char *src,unsigned char* dst,int nWidth,int nHeight)
-{
-	int ImgHeight, ImgWidth;
-
-	ImgWidth = nWidth;
-	ImgHeight = nHeight;
-	uint8_t *  pDst8_t;
-	uint8_t *  pSrc8_t;
-
-	pSrc8_t = (uint8_t*)(src);
-	pDst8_t = (uint8_t*)(dst);
-
-	for(int y = 0; y < ImgHeight*ImgWidth; y++)
-	{
-		pDst8_t[y] = pSrc8_t[y*3+1];
-	}
-	
-}
 
 
 int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v,affine_param* apout)
@@ -513,7 +499,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	affine_param *ap_modify = cs->m_modify;
 	static char pp = 0;
 	int ttt,nnn = 0;
-	
+
 	time[0] = OSA_getCurTimeInMsec();
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
@@ -554,20 +540,25 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	unsigned char *dfcif_sobel= NULL;
 	unsigned char *dfqcif = NULL;
 	unsigned char *dfqcif_sobel= NULL;
-
 	cudaStatus = cudaMalloc((void**)&src_gray,sizeof(unsigned char)*nWidth*nHeight);
-	cuda_tran_gray<<<1,1,0>>>(src.data,src_gray, nWidth,nHeight);
+
+	tran_gray_cuda(src.data,src_gray, nWidth,nHeight);
 
 	cudaStatus = cudaMalloc((void**)&dfcur_sobel,s->i_height*s->i_width);
 	cudaStatus = cudaMalloc((void**)&dfcif, s->i_height>>1*s->i_width>>1);
 	cudaStatus = cudaMalloc((void**)&dfcif_sobel, s->i_height>>1*s->i_width>>1);
 	cudaStatus = cudaMalloc((void**)&dfqcif, s->i_height>>2*s->i_width>>2);
 	cudaStatus = cudaMalloc((void**)&dfqcif_sobel, s->i_height>>2*s->i_width>>2);
-	
-	//Sobel_cuda(src.data, dfcur_sobel, s->i_width, s->i_height);
-	//Sobel_cuda(dfcif, dfcif_sobel, s->i_width>>1, s->i_height>>1);
-	//Sobel_cuda(dfqcif, dfcif_sobel, s->i_width>>2, s->i_height>>2);
 
+
+
+printf("33333333333333333333\n");
+return 0;	
+	Sobel_cuda(src.data, dfcur_sobel, s->i_width, s->i_height);
+	Sobel_cuda(dfcif, dfcif_sobel, s->i_width>>1, s->i_height>>1);
+	Sobel_cuda(dfqcif, dfcif_sobel, s->i_width>>2, s->i_height>>2);
+	
+printf("444444444444444444444\n");
 
 	
 	
@@ -591,13 +582,12 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
 
 	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
-	//src.copyTo(mfcur);
-	Mat tmp = Mat(576,720,CV_8UC3);
-	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
-	extractUYVY2Gray(tmp,mfcur);
+	src.copyTo(mfcur);
+	//Mat tmp = Mat(576,720,CV_8UC3);
+	//cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
+	//extractUYVY2Gray(tmp,mfcur);
 
 	time[3] = OSA_getCurTimeInMsec();
-	
 
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
@@ -650,26 +640,32 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 			MeErr = 10;
 		}
 		else		
-			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);		
-
+		{
+			time[7] = OSA_getCurTimeInMsec();
+			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);	
+ 			time[8] = OSA_getCurTimeInMsec();
+			matime++;
+			//printf("mattime : %u\n",time[8] - time[7]);
+		}
+		time[9] = OSA_getCurTimeInMsec();
 		AnalysisMeResult(cs);
-	
+		 time[10] = OSA_getCurTimeInMsec();
 		MotionFilter(cs);
-
+		 time[11] = OSA_getCurTimeInMsec();
 		memcpy(apout,cs->m_modify,sizeof(affine_param));
-		
-		//MotionProcess(cs,mfcur,mfout,mode);
+		time[12] = OSA_getCurTimeInMsec();
+		//MotionProcess(cs,tmp,tmp,mode);
 		//cudaMemcpy(dst.data, mfout.data, s->i_height*s->i_width, cudaMemcpyHostToDevice);
-
-
-		//MotionProcess(cs, src,dst,mode);
-		//Mat mattmp = Mat(576,720,CV_8UC3);
-		//cudaMemcpy(mattmp.data, dst.data, s->i_height*s->i_width*3, cudaMemcpyDeviceToHost);
-		//printf("imshow\n");
-		//imshow("mfoutmfout",mattmp);
-		//waitKey(0);
-		//return 0;
-
+		 
+		MotionProcess(cs, src,dst,mode);
+		 time[13] = OSA_getCurTimeInMsec();
+		#if 0
+			Mat mattmp = Mat(576,720,CV_8UC3);
+			cudaMemcpy(mattmp.data, dst.data, s->i_height*s->i_width*3, cudaMemcpyDeviceToHost);
+			printf("imshow\n");
+			imshow("mfoutmfout",mattmp);
+			waitKey(0);
+		#endif
 
 	    FRAME_EXCHANGE(s->fD1Ref,s->fD1Cur->buffer[0]);	
 	    FRAME_EXCHANGE(s->fD1RefSobel, mfcur_sobel.data);
@@ -677,10 +673,11 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	    FRAME_EXCHANGE(s->fCifRefSobel, mfCifCur_sobel.data);
 	    FRAME_EXCHANGE(s->fQcifRef,     mfQcifCur.data);
 	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);		
-	      time[11] = OSA_getCurTimeInMsec();
+	    time[14] = OSA_getCurTimeInMsec();
 	 }
 	
-	//analytime();
+	
+	analytime();
 	
 	return 0;
 }
@@ -691,15 +688,17 @@ void CStability::analytime()
 	unsigned int tmp;
 	if(anytimenum == DEBUGTIME)
 	{
-		for(i = 0;i<11;i++)
+		for(i = 0;i<14;i++)
 			avr[i] = anytime[i]/DEBUGTIME;
+		avr[7] = anytime[7]/matime;
 		avr[15] = anytime[15]/DEBUGTIME;
 		anytimenum = 0;
+		matime = 0;
 
 		//for(i = 0;i<11;i++)
 		{
 			i = 3;
-			printf("preprocess min[%d] = %u\n",i,mintime[i]);
+			printf("\npreprocess min[%d] = %u\n",i,mintime[i]);
 			printf("preprocess avr[%d] = %u\n",i,avr[i]);	
 			printf("preprocess max[%d] = %u\n",i,maxtime[i]);
 
@@ -708,22 +707,22 @@ void CStability::analytime()
 			printf("findpoint avr[%d] = %u\n",i,avr[i]);	
 			printf("findpoint max[%d] = %u\n",i,maxtime[i]);	
 
-			i = 6;
+			i = 7;
 			printf("match min[%d] = %u\n",i,mintime[i]);
 			printf("match avr[%d] = %u\n",i,avr[i]);	
 			printf("match max[%d] = %u\n",i,maxtime[i]);	
 
-			i = 7;
+			i = 9;
 			printf("analy min[%d] = %u\n",i,mintime[i]);
 			printf("analy avr[%d] = %u\n",i,avr[i]);	
 			printf("analy max[%d] = %u\n",i,maxtime[i]);	
 			
-			i = 8;
+			i = 10;
 			printf("motionfilter min[%d] = %u\n",i,mintime[i]);
 			printf("motionfilter avr[%d] = %u\n",i,avr[i]);	
 			printf("motionfilter max[%d] = %u\n",i,maxtime[i]);	
 
-			i = 9;
+			i = 12;
 			printf("motioncpmpensate min[%d] = %u\n",i,mintime[i]);
 			printf("motioncpmpensate avr[%d] = %u\n",i,avr[i]);	
 			printf("motioncpmpensate max[%d] = %u\n",i,maxtime[i]);	
@@ -749,10 +748,8 @@ void CStability::analytime()
 	else
 	{
 	
-		for(i = 0;i<11;i++)
+		for(i = 0;i<14;i++)
 		{
-			if(i == 4)
-				continue;
 			tmp = (time[i+1] - time[i]);
 			anytime[i] += tmp;
 			
@@ -762,7 +759,7 @@ void CStability::analytime()
 				maxtime[i] = tmp;
 		}	
 		
-		tmp = time[11] - time[0];
+		tmp = time[14] - time[0];
 		anytime[15] += tmp;
 		if(tmp < mintime[15])
 			mintime[15] = tmp;		

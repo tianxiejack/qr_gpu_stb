@@ -591,7 +591,6 @@ printf("444444444444444444444\n");
 
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
-
 #endif
 
 
@@ -630,8 +629,9 @@ printf("444444444444444444444\n");
 				s->CifFp, &(s->CifFpNum),s->D1Fp, &(s->D1FpNum),
 				mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel);
 
-		 time[6] = OSA_getCurTimeInMsec();
-
+		time[6] = OSA_getCurTimeInMsec();
+		time[7] = 0;
+		time[8] = 0;
 		/*		此处待添加调试  FTP_SHOW		*/
 		if (s->QcifFpNum < 3) //特征点太少
 		{
@@ -645,13 +645,14 @@ printf("444444444444444444444\n");
 			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);	
  			time[8] = OSA_getCurTimeInMsec();
 			matime++;
-			//printf("mattime : %u\n",time[8] - time[7]);
 		}
 		time[9] = OSA_getCurTimeInMsec();
 		AnalysisMeResult(cs);
 		 time[10] = OSA_getCurTimeInMsec();
 		MotionFilter(cs);
 		 time[11] = OSA_getCurTimeInMsec();
+		
+
 		memcpy(apout,cs->m_modify,sizeof(affine_param));
 		time[12] = OSA_getCurTimeInMsec();
 		//MotionProcess(cs,tmp,tmp,mode);
@@ -676,7 +677,6 @@ printf("444444444444444444444\n");
 	    time[14] = OSA_getCurTimeInMsec();
 	 }
 	
-	
 	analytime();
 	
 	return 0;
@@ -686,14 +686,14 @@ void CStability::analytime()
 {
 	int i;
 	unsigned int tmp;
-	if(anytimenum == DEBUGTIME)
+	if(anytimenum == DEBUGTIME -1)
 	{
 		for(i = 0;i<14;i++)
 			avr[i] = anytime[i]/DEBUGTIME;
 		avr[7] = anytime[7]/matime;
 		avr[15] = anytime[15]/DEBUGTIME;
+
 		anytimenum = 0;
-		matime = 0;
 
 		//for(i = 0;i<11;i++)
 		{
@@ -702,32 +702,32 @@ void CStability::analytime()
 			printf("preprocess avr[%d] = %u\n",i,avr[i]);	
 			printf("preprocess max[%d] = %u\n",i,maxtime[i]);
 
-			i = 5;
-			printf("findpoint min[%d] = %u\n",i,mintime[i]);
-			printf("findpoint avr[%d] = %u\n",i,avr[i]);	
-			printf("findpoint max[%d] = %u\n",i,maxtime[i]);	
+			//i = 5;
+			//printf("findpoint min[%d] = %u\n",i,mintime[i]);
+			//printf("findpoint avr[%d] = %u\n",i,avr[i]);	
+			//printf("findpoint max[%d] = %u\n",i,maxtime[i]);	
 
 			i = 7;
 			printf("match min[%d] = %u\n",i,mintime[i]);
 			printf("match avr[%d] = %u\n",i,avr[i]);	
 			printf("match max[%d] = %u\n",i,maxtime[i]);	
 
-			i = 9;
-			printf("analy min[%d] = %u\n",i,mintime[i]);
-			printf("analy avr[%d] = %u\n",i,avr[i]);	
-			printf("analy max[%d] = %u\n",i,maxtime[i]);	
+			//i = 9;
+			//printf("analy min[%d] = %u\n",i,mintime[i]);
+			//printf("analy avr[%d] = %u\n",i,avr[i]);	
+			//printf("analy max[%d] = %u\n",i,maxtime[i]);	
 			
-			i = 10;
-			printf("motionfilter min[%d] = %u\n",i,mintime[i]);
-			printf("motionfilter avr[%d] = %u\n",i,avr[i]);	
-			printf("motionfilter max[%d] = %u\n",i,maxtime[i]);	
+			//i = 10;
+			//printf("motionfilter min[%d] = %u\n",i,mintime[i]);
+			//printf("motionfilter avr[%d] = %u\n",i,avr[i]);	
+			//printf("motionfilter max[%d] = %u\n",i,maxtime[i]);	
 
 			i = 12;
 			printf("motioncpmpensate min[%d] = %u\n",i,mintime[i]);
 			printf("motioncpmpensate avr[%d] = %u\n",i,avr[i]);	
 			printf("motioncpmpensate max[%d] = %u\n",i,maxtime[i]);	
 
-			i=15;
+			i=13;
 			printf("allcost min[%d] = %u\n",i,mintime[i]);
 			printf("allcost avr[%d] = %u\n",i,avr[i]);	
 			printf("allcost max[%d] = %u\n",i,maxtime[i]);				
@@ -735,40 +735,37 @@ void CStability::analytime()
 			
 				
 	}
-	else if(anytimenum >DEBUGTIME)
+	else if(anytimenum > DEBUGTIME -1)
 	{
 		anytimenum = 0;	
 	}
-	else if(anytimenum == 0)
+	
+	if(anytimenum == 0)
 	{
-		memset(anytime,0,sizeof(unsigned int));
+		memset(anytime,0,20*sizeof(unsigned int));
 		memset(mintime,10000,20*sizeof(unsigned int));
 		memset(maxtime,0,20*sizeof(unsigned int));
+		matime = 0;
 	}
-	else
+		
+	for(i = 0;i<=12;i++)
 	{
-	
-		for(i = 0;i<14;i++)
-		{
-			tmp = (time[i+1] - time[i]);
-			anytime[i] += tmp;
-			
-			if(tmp < mintime[i])
-				mintime[i] = tmp;		
-			else if(tmp>maxtime[i])
-				maxtime[i] = tmp;
-		}	
+		tmp = (time[i+1] - time[i]);
+		anytime[i] += tmp;
 		
-		tmp = time[14] - time[0];
-		anytime[15] += tmp;
-		if(tmp < mintime[15])
-			mintime[15] = tmp;		
-		else if(tmp> maxtime[15])
-			maxtime[15] = tmp;
-			
+		if(tmp < mintime[i])
+			mintime[i] = tmp;		
+		else if(tmp>maxtime[i])
+			maxtime[i] = tmp;
+	}	
+		tmp = (time[14] - time[0]);
+		anytime[13] += tmp;
 		
+		if(tmp < mintime[13])
+			mintime[13] = tmp;		
+		else if(tmp>maxtime[13])
+			maxtime[13] = tmp;
 
-	}
 	anytimenum ++ ;
 
 	return ;	

@@ -485,7 +485,7 @@ void extractUYVY2Gray(Mat src, Mat dst)
 	#pragma omp parallel for
 	for(int y = 0; y < ImgHeight*ImgWidth; y++)
 	{
-		pDst8_t[y] = pSrc8_t[y*3+1];
+		pDst8_t[y] = pSrc8_t[y*2+1];
 	}
 }
 
@@ -583,9 +583,11 @@ printf("444444444444444444444\n");
 
 	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
 	//src.copyTo(mfcur);
+	//extractUYVY2Gray(tmp,mfcur);
+	
 	Mat tmp = Mat(576,720,CV_8UC3);
 	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
-	extractUYVY2Gray(tmp,mfcur);
+	cvtColor(tmp,mfcur,CV_BGR2GRAY);
 	
 	time[3] = OSA_getCurTimeInMsec();
 

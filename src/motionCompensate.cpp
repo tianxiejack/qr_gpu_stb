@@ -5,16 +5,13 @@
 #include <device_launch_parameters.h>
 
 
-extern "C" void RotImgProgress_uyvy_cuda(unsigned char *src, unsigned char *dst,
-								float cos, float sin, float dx, float dy,
-								int src_width, int src_height,
-								int dst_width, int dst_height);
 extern "C" void RotImgProgress_cuda(unsigned char *src, unsigned char *dst, 
 								float cos, float sin, float dx, float dy,
-								int src_width, int src_height, 
-								int dst_width, int dst_height);
+								int src_width, int src_height);
 
 
+
+#if 0
 void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,float s_cos,float s_sin,float dx,float dy)
 {
     float a, b, c, d;
@@ -67,26 +64,78 @@ void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,flo
         t_y_x = n * r_y + p;
         t_y_y = m * r_y + q;
         pdst = frot + r_y * i_width*3;
-        for (r_x = 0; r_x < i_width*3; r_x++)
+        for (r_x = 0; r_x < i_width; r_x++)
         {
             x =  m * r_x + t_y_x;
             y = -n * r_x + t_y_y;
             x = x >> 10;
             y = y >> 10;
 			
-            if ((x < 0) || (x >= i_width*3) || (y < 0) || (y >= i_height)) 
-            {
-            		pdst[r_x] = 0;
+            if ((x < 0) || (x >= i_width) || (y < 0) || (y >= i_height)) 
             		continue;
-            }
 			
-            pdst[r_x] = forg[y * i_width*3 + x];
+            pdst[r_x*3] = forg[y * i_width*3 + x*3];
+	     pdst[r_x*3+1] = forg[y * i_width*3 + x*3+1];
+	     pdst[r_x*3+2] = forg[y * i_width*3 + x*3+2];
         }
     }	
 
 #endif
 	return ;
 }
+#else
+void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,float s_cos,float s_sin,float dx,float dy)
+{
+    float a, b, c, d;
+    int m, n, p, q;
+    int x, y, r_x, r_y, t_y_x, t_y_y;
+    unsigned char *pdst;
+    a = s_cos;
+    b = s_sin;
+    c = dx;
+    d = dy;
+
+#if 0
+    m = (int)(a * 1024.0); //a / (a*a + b*b);
+    n = (int)(b * 1024.0); //b / (a*a + b*b);
+    p = (int)(-c * 1024.0) + 512; //-(a*c + b*d) / (a*a + b*b);
+    q = (int)(-d * 1024.0) + 512; //-(a*d - b*c) / (a*a + b*b);
+#else
+    m = (int)((a / (a * a + b * b)) * 1024.0); //a / (a*a + b*b);
+    n = (int)((b / (a * a + b * b)) * 1024.0); //b / (a*a + b*b);
+    p = (int)(-((a * c + b * d) / (a * a + b * b)) * 1024.0) + 512; //-(a*c + b*d) / (a*a + b*b);
+    q = (int)(-((a * d - b * c) / (a * a + b * b)) * 1024.0) + 512; //-(a*d - b*c) / (a*a + b*b);
+#endif
+
+
+    for (r_y = 0; r_y < i_height; r_y++)
+    {
+        t_y_x = n * r_y + p;
+        t_y_y = m * r_y + q;
+        pdst = frot + r_y * i_width*3;
+        for (r_x = 0; r_x < i_width; r_x++)
+        {
+            x =  m * r_x + t_y_x;
+            y = -n * r_x + t_y_y;
+            x = x >> 10;
+            y = y >> 10;
+			
+            if ((x < 0) || (x >= i_width) || (y < 0) || (y >= i_height)) 
+            		continue;
+			
+            pdst[r_x*3] = forg[y * i_width*3 + x*3];
+	     pdst[r_x*3+1] = forg[y * i_width*3 + x*3+1];
+	     pdst[r_x*3+2] = forg[y * i_width*3 + x*3+2];
+        }
+    }	
+
+
+	return ;
+}
+
+#endif
+
+
 
 void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
 {
@@ -122,11 +171,8 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
    }
 	//cos = 1.0;sin = 0.0;dx = 0.0;dy = 0.0;
 	//RotImg(src.data,dst.data,s->i_width,s->i_height,cos,sin,dx,dy);
-
 	
-	RotImgProgress_uyvy_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height, s->i_width, s->i_height);
-	
-	//RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height, s->i_width, s->i_height);
+	RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height);
 
 }
 

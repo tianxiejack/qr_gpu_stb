@@ -136,7 +136,7 @@ extern "C" void RotImgProgress_cuda(unsigned char *src, unsigned char *dst,
       n = (int)((b / (a * a + b * b)) * 1024.0);
       p = (int)(-((a * c + b * d) / (a * a + b * b)) * 1024.0) + 512; 
       q = (int)(-((a * d - b * c) / (a * a + b * b)) * 1024.0) + 512; 
-	    
+
 	kernel_RotImgProgress_<<<block, thread>>>(src, dst, 
 							src_width, src_height,
 							m, n, p, q);

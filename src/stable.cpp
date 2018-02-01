@@ -503,7 +503,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	time[0] = OSA_getCurTimeInMsec();
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
-	
+
 	if(nWidth == 1920)
 	{
 		edge_h = cedge_h / s->grid_w ;
@@ -583,10 +583,10 @@ printf("444444444444444444444\n");
 
 	//src.copyTo(mfcur);
 	//extractUYVY2Gray(tmp,mfcur);
-
-	Mat tmp = Mat(nHeight,nWidth,CV_8UC3);
-	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
-	cvtColor(tmp,mfcur,CV_BGR2GRAY);
+	memcpy(mfcur.data,src.data,nWidth*nHeight);
+	//Mat tmp = Mat(nHeight,nWidth,CV_8UC3);
+	//cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
+	//cvtColor(tmp,mfcur,CV_BGR2GRAY);
 
 	time[3] = OSA_getCurTimeInMsec();
 
@@ -656,30 +656,40 @@ printf("444444444444444444444\n");
 		 time[10] = OSA_getCurTimeInMsec();
 		MotionFilter(cs);
 		 time[11] = OSA_getCurTimeInMsec();
+		 
+		printf("cs->m_modify.dx = %f\n",cs->m_modify->dx);
+		printf("cs->m_modify.dy = %f\n",cs->m_modify->dy);
+		printf("cs->m_modify.cos = %f\n",cs->m_modify->cos);
+		printf("cs->m_modify.sin = %f\n",cs->m_modify->sin);
+
 
 		memcpy(apout,cs->m_modify,sizeof(affine_param));
+
+			
 		time[12] = OSA_getCurTimeInMsec();
 		//MotionProcess(cs,tmp,tmp,mode);
 		//cudaMemcpy(dst.data, mfout.data, s->i_height*s->i_width, cudaMemcpyHostToDevice);
-
 		#if 0
+		printf("begin begin \n");
+		#if 1
 		float elapsedTime;
 		( (		cudaEventCreate	(	&start)	) );
-		//( (		cudaEventCreate	(	&stop)	) );
+		( (		cudaEventCreate	(	&stop)	) );
 		( (		cudaEventRecord	(	start,	0)	) );
 		#endif
-
+		printf("aaaaaaaaaa\n");
 		MotionProcess(cs, src,dst,mode);
-		#if 0
-		//((	cudaEventRecord(	stop,	0	)));
-		//((	cudaEventSynchronize(	stop)	));
+		#if 1
+		((	cudaEventRecord(	stop,	0	)));
+		((	cudaEventSynchronize(	stop)	));
 		((	cudaEventSynchronize(	start)	));
-		//(	cudaEventElapsedTime(	&elapsedTime,	start,	stop));	
-		//printf("Time :	%3.1f	ms \n", elapsedTime);
+		(	cudaEventElapsedTime(	&elapsedTime,	start,	stop));	
+		printf("Time :	%3.1f	ms \n", elapsedTime);
+		printf("bbbbbbb\n");
 		((	cudaEventDestroy(	start	)));
-		//((	cudaEventDestroy(	stop	)));		
+		((	cudaEventDestroy(	stop	)));		
 		#endif
-
+		printf("cccccc\n");
 		time[13] = OSA_getCurTimeInMsec();
 		#if 0
 			Mat mattmp = Mat(576,720,CV_8UC3);
@@ -688,7 +698,8 @@ printf("444444444444444444444\n");
 			imshow("mfoutmfout",mattmp);
 			waitKey(0);
 		#endif
-
+		printf("end end \n");
+		#endif
 	    FRAME_EXCHANGE(s->fD1Ref,s->fD1Cur->buffer[0]);	
 	    FRAME_EXCHANGE(s->fD1RefSobel, mfcur_sobel.data);
 	    FRAME_EXCHANGE(s->fCifRef,      mfCifCur.data);
@@ -697,14 +708,14 @@ printf("444444444444444444444\n");
 	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);		
 	    time[14] = OSA_getCurTimeInMsec();
 
-	printf("preprocess time : %u\n",time[4] - time[3]);	
-  	printf("match time : %u\n",time[8] - time[7]);	
-	printf("motioncpmpensate time : %u\n",time[13] - time[12]);	
-	printf("ellllllllllllllll time : %u\n",time[14] - time[0]);
+	//printf("preprocess time : %u\n",time[4] - time[3]);	
+  	//printf("match time : %u\n",time[8] - time[7]);	
+	//printf("motioncpmpensate time : %u\n",time[13] - time[12]);	
+	//printf("ellllllllllllllll time : %u\n",time[14] - time[0]);
 	 }
 	
 	//analytime();
-	
+
 	return 0;
 }
 

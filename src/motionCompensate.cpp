@@ -11,7 +11,7 @@ extern "C" void RotImgProgress_cuda(unsigned char *src, unsigned char *dst,
 
 
 
-#if 0
+#if 1
 void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,float s_cos,float s_sin,float dx,float dy)
 {
     float a, b, c, d;
@@ -35,7 +35,7 @@ void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,flo
     q = (int)(-((a * d - b * c) / (a * a + b * b)) * 1024.0) + 512; //-(a*d - b*c) / (a*a + b*b);
 #endif
 
-#if 0
+
     for (r_y = 0; r_y < i_height; r_y++)
     {
         t_y_x = n * r_y + p;
@@ -57,33 +57,10 @@ void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,flo
             pdst[r_x] = forg[y * i_width + x];
         }
     }	
-#else
-
-    for (r_y = 0; r_y < i_height; r_y++)
-    {
-        t_y_x = n * r_y + p;
-        t_y_y = m * r_y + q;
-        pdst = frot + r_y * i_width*3;
-        for (r_x = 0; r_x < i_width; r_x++)
-        {
-            x =  m * r_x + t_y_x;
-            y = -n * r_x + t_y_y;
-            x = x >> 10;
-            y = y >> 10;
-			
-            if ((x < 0) || (x >= i_width) || (y < 0) || (y >= i_height)) 
-            		continue;
-			
-            pdst[r_x*3] = forg[y * i_width*3 + x*3];
-	     pdst[r_x*3+1] = forg[y * i_width*3 + x*3+1];
-	     pdst[r_x*3+2] = forg[y * i_width*3 + x*3+2];
-        }
-    }	
-
-#endif
-	return ;
 }
+
 #else
+
 void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,float s_cos,float s_sin,float dx,float dy)
 {
     float a, b, c, d;
@@ -151,7 +128,7 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
    {
    	   	   case COMPENSATE_NORMAL:
    	   		   	   //do nothing;
-   	   		   	   	 break;
+   	   		   	   break;
    	   	   case COMPENSATE_X:
    	   		   	   dy = 0;
    	   		   	   cos = 1.0;
@@ -170,9 +147,10 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
    	   		   	   break;
    }
 	//cos = 1.0;sin = 0.0;dx = 0.0;dy = 0.0;
-	//RotImg(src.data,dst.data,s->i_width,s->i_height,cos,sin,dx,dy);
+	RotImg(src.data,dst.data,s->i_width,s->i_height,cos,sin,dx,dy);
 	
-	RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height);
+	//RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height);
+
 
 }
 

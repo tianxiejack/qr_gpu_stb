@@ -499,7 +499,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	affine_param *ap_modify = cs->m_modify;
 	static char pp = 0;
 	int ttt,nnn = 0;
-
+	cudaEvent_t	start, stop;
 	time[0] = OSA_getCurTimeInMsec();
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
@@ -582,19 +582,19 @@ printf("444444444444444444444\n");
 	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
 
 	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
-	//src.copyTo(mfcur);
+	src.copyTo(mfcur);
 	//extractUYVY2Gray(tmp,mfcur);
 	
-	Mat tmp = Mat(576,720,CV_8UC3);
-	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
-	cvtColor(tmp,mfcur,CV_BGR2GRAY);
-	
+	//Mat tmp = Mat(nHeight,nWidth,CV_8UC3);
+	//cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
+	//cvtColor(tmp,mfcur,CV_BGR2GRAY);
+
+
 	time[3] = OSA_getCurTimeInMsec();
 
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
 #endif
-
 
 	time[4] = OSA_getCurTimeInMsec();
 
@@ -603,7 +603,7 @@ printf("444444444444444444444\n");
 	{
 		time[0] = 0;
 		time[3] = 0;
-
+		time[4] = 0;
 		s->bReset = 0;
 		InitFilter(&(s->last_af),ap_modify,&(s->flt));
 		kkalman.KalmanInitParam(s->g_pKalman, 0.0, 0.0, 0.0, 1.0, 0.0);
@@ -658,15 +658,29 @@ printf("444444444444444444444\n");
 		 time[10] = OSA_getCurTimeInMsec();
 		MotionFilter(cs);
 		 time[11] = OSA_getCurTimeInMsec();
-		
 
 		memcpy(apout,cs->m_modify,sizeof(affine_param));
 		time[12] = OSA_getCurTimeInMsec();
 		//MotionProcess(cs,tmp,tmp,mode);
 		//cudaMemcpy(dst.data, mfout.data, s->i_height*s->i_width, cudaMemcpyHostToDevice);
-		 
+		#if 0
+		float elapsedTime;
+		( (		cudaEventCreate	(	&start)	) );
+		//( (		cudaEventCreate	(	&stop)	) );
+		( (		cudaEventRecord	(	start,	0)	) );
+		#endif
 		MotionProcess(cs, src,dst,mode);
-		 time[13] = OSA_getCurTimeInMsec();
+		#if 0
+		//((	cudaEventRecord(	stop,	0	)));
+		//((	cudaEventSynchronize(	stop)	));
+		((	cudaEventSynchronize(	start)	));
+		//(	cudaEventElapsedTime(	&elapsedTime,	start,	stop));	
+		//printf("Time :	%3.1f	ms \n", elapsedTime);
+		((	cudaEventDestroy(	start	)));
+		//((	cudaEventDestroy(	stop	)));		
+		#endif
+
+		time[13] = OSA_getCurTimeInMsec();
 		#if 0
 			Mat mattmp = Mat(576,720,CV_8UC3);
 			cudaMemcpy(mattmp.data, dst.data, s->i_height*s->i_width*3, cudaMemcpyDeviceToHost);
@@ -682,9 +696,14 @@ printf("444444444444444444444\n");
 	    FRAME_EXCHANGE(s->fQcifRef,     mfQcifCur.data);
 	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);		
 	    time[14] = OSA_getCurTimeInMsec();
+
+	printf("preprocess time : %u\n",time[4] - time[3]);	
+  	printf("match time : %u\n",time[8] - time[7]);	
+	printf("motioncpmpensate time : %u\n",time[13] - time[12]);	
+	printf("ellllllllllllllll time : %u\n",time[14] - time[0]);
 	 }
 	
-	analytime();
+	//analytime();
 	
 	return 0;
 }

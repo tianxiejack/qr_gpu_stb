@@ -124,29 +124,29 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
 	float dx = ap->dx;
 	float dy = ap->dy;
 
-   switch(mode)
-   {
-   	   	   case COMPENSATE_NORMAL:
-   	   		   	   //do nothing;
-   	   		   	   break;
-   	   	   case COMPENSATE_X:
-   	   		   	   dy = 0;
-   	   		   	   cos = 1.0;
-   	   		   	   sin = 0.0;
-   	   		   	   break;
-   	   	   case COMPENSATE_Y:
-   	   		   	   dx = 0;
-   	   		   	   cos = 1.0;
-   	   		   	   sin = 0.0;
-   	   		   	   break;
-   	   	   case COMPENSATE_ROT:
-   	   		   	   dx = 0.0;
-   	   		   	   dy = 0.0;
-   	   		   	   break;
-   	   	   default:
-   	   		   	   break;
-   }
-	//cos = 1.0;sin = 0.0;dx = 0.0;dy = 0.0;
+	switch(mode)
+	{
+   	   case COMPENSATE_NORMAL:
+   		   	   //do nothing;
+   		   	   break;
+   	   case COMPENSATE_X:
+   		   	   dy = 0;
+   		   	   cos = 1.0;
+   		   	   sin = 0.0;
+   		   	   break;
+   	   case COMPENSATE_Y:
+   		   	   dx = 0;
+   		   	   cos = 1.0;
+   		   	   sin = 0.0;
+   		   	   break;
+   	   case COMPENSATE_ROT:
+   		   	   dx = 0.0;
+   		   	   dy = 0.0;
+   		   	   break;
+   	   default:
+   		   	   break;
+	}
+	//cos = 1.0;sin = 0.0;dx = 33.0;dy = 8.0;
 	RotImg(src.data,dst.data,s->i_width,s->i_height,cos,sin,dx,dy);
 	
 	//RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height);

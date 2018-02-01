@@ -303,8 +303,8 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 	#if 1
 	/*		sobel 	*/
 	//printf("******begin*********\n");
-	IMG_sobel2(fcur.data, fCurSobel.data,fcur.cols, fcur.rows);
-	IMG_sobel2(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);
+	IMG_sobel(fcur.data, fCurSobel.data,fcur.cols, fcur.rows);
+	IMG_sobel(cifCur.data, cifCurSobel.data,cifCur.cols, cifCur.rows);
 	IMG_sobel(QcifCur.data, QcifCurSobel.data,QcifCur.cols, QcifCur.rows);
 	//printf("******end*********\n");
 

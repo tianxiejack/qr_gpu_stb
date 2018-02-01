@@ -581,14 +581,12 @@ printf("444444444444444444444\n");
 	mfCifCur_sobel_ref = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifRefSobel);
 	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
 
-	//dst = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
 	src.copyTo(mfcur);
 	//extractUYVY2Gray(tmp,mfcur);
-	
+
 	//Mat tmp = Mat(nHeight,nWidth,CV_8UC3);
 	//cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
 	//cvtColor(tmp,mfcur,CV_BGR2GRAY);
-
 
 	time[3] = OSA_getCurTimeInMsec();
 
@@ -663,13 +661,15 @@ printf("444444444444444444444\n");
 		time[12] = OSA_getCurTimeInMsec();
 		//MotionProcess(cs,tmp,tmp,mode);
 		//cudaMemcpy(dst.data, mfout.data, s->i_height*s->i_width, cudaMemcpyHostToDevice);
+
 		#if 0
 		float elapsedTime;
 		( (		cudaEventCreate	(	&start)	) );
 		//( (		cudaEventCreate	(	&stop)	) );
 		( (		cudaEventRecord	(	start,	0)	) );
 		#endif
-		MotionProcess(cs, src,dst,mode);
+		
+		MotionProcess(cs, mfcur,src,mode);
 		#if 0
 		//((	cudaEventRecord(	stop,	0	)));
 		//((	cudaEventSynchronize(	stop)	));

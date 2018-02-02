@@ -79,10 +79,10 @@ typedef struct
     void *pInnerBuf;                //1920 x 48 内存，地址是128对齐，在片内申请的一片内存，用于中间数据缓冲，以提高运行速度
     void *pInnerKalman;             //4096+512 内存，地址是128对齐，在片内申请的一片内存，用于中间数据缓冲，以提高运行速度
 
-    int i_width;                    //图像宽（单位为像素）
-    int i_height;                   //图像高（单位为像素）
-    int grid_w;                     //特征点分布的栅格尺寸宽
-    int grid_h;                     //特征点分布的栅格尺寸高
+    unsigned int i_width;                    //图像宽（单位为像素）
+    unsigned int i_height;                   //图像高（单位为像素）
+    unsigned int grid_w;                     //特征点分布的栅格尺寸宽
+    unsigned int grid_h;                     //特征点分布的栅格尺寸高
 
    unsigned char edgeTh;           //作为边缘的特征点的阈值，是由FindFeatruePoint函数计算出来的，其值的范围0x18--0x80之间
 

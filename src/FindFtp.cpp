@@ -92,10 +92,11 @@ int CFindFtp::findFtpInQcif()
     int i,j,n;
     //printf("v_mb_num - edge_v = %d\n",v_mb_num - edge_v);
     //printf("h_mb_num - edge_h = %d\n",h_mb_num - edge_h);
-    pp = 0;
+
    // pSobelBuf[pp] =  (unsigned char*)(qcif_sobel + edge_v * mb_h * qcif_w + edge_h * mb_w);
    pSobelBuf =  (unsigned char*)qcif_sobel;
    qcifnum = 0;
+
     for (j = edge_v; j < (v_mb_num - edge_v); j++)
 	{
 	        for ( i = edge_h; i < (h_mb_num - edge_h); i++)
@@ -119,6 +120,9 @@ int CFindFtp::findFtpInQcif()
 	            }
 	        }
 	    }
+
+
+
 	if (qcifnum < 3)
 	{
 	    *edgeTh = edge_thr;
@@ -519,15 +523,19 @@ void CFindFtp::findFtp(unsigned char *cedgeTh,FPOINT *cqcif_fp,
     ErrNo = findFtpInQcif();
     if(ErrNo == -1)
     	return ;
+	
 
     ErrNo = findFtpInCif();
     if(ErrNo == -1)
     	return ;
 
+
     ErrNo = findFtpInD1();
     if(ErrNo == -1)
     	return ;
 
+
+//printf("qcifnum = %d\n",d1num);
 
     ErrNo = tidyFtp();
     if(ErrNo == -1)

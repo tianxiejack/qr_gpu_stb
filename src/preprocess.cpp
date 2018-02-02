@@ -311,7 +311,12 @@ void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Ma
 	//Sobel(fcur,fCurSobel,fcur.depth(),1,1);
 	//Sobel(cifCur,cifCurSobel,fcur.depth(),1,1);
 	//Sobel(QcifCur,QcifCurSobel,fcur.depth(),1,1);
-	
+
+	//imshow("111",fCurSobel);
+	//imshow("222",cifCurSobel);
+	//imshow("333",QcifCurSobel);
+	//waitKey(0);
+
 	#else
 	cudaError_t cudaStatus;
 	int byteCount_cur, byteCount_cif,byteCount_qcif;

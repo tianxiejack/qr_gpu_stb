@@ -9,8 +9,14 @@
 #include "cuda_runtime.h"
 
 #include <unistd.h>
+#include <time.h>
+
 //int numStableObj = 0;
 CStability* pStableObj = NULL;
+
+
+VideoWriter g_WriteFile;
+
 #define DEBUGTIME 	100
 /*
 *待添加
@@ -167,7 +173,7 @@ CStability::CStability()
 
 CStability::~CStability()
 {
-
+	
 }
 
 void CStability::init()
@@ -254,6 +260,10 @@ void CStability::init()
 	memset(s->QcifFp,0, (imgw>>2)*(imgh>>2)*sizeof(FPOINT));
 
 	OpenStabilize(s);
+
+
+	g_WriteFile.open("test.avi", CV_FOURCC('M','J','P','G'), 25.0, cvSize(720, 576));
+			
 }
 
 void CStability::OpenStabilize(stb_t* s)
@@ -500,7 +510,8 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	static char pp = 0;
 	int ttt,nnn = 0;
 	cudaEvent_t	start, stop;
-	time[0] = OSA_getCurTimeInMsec();
+	static float pauseInput = 1000;
+	time12[0] = OSA_getCurTimeInMsec();
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
 
@@ -524,6 +535,23 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
        	s->CifFp[i].ftv = 0x00;
         	s->QcifFp[i].ftv = 0x00;
     	}
+
+	// record the video
+	#if 0
+	Mat temp = Mat(576,720,CV_8UC3);
+
+	cudaMemcpy(temp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
+	
+	if(1 /*&& isfilt*/)
+	{
+		g_WriteFile << temp;
+		imshow("vvvvvv",temp);
+		waitKey(1);
+	}
+	return 0;
+	#endif
+
+	
 
 #if 0
 	cudaError_t cudaStatus;
@@ -579,26 +607,28 @@ printf("444444444444444444444\n");
 	//src.copyTo(mfcur);
 	//extractUYVY2Gray(tmp,mfcur);
 	//memcpy(mfcur.data,src.data,nWidth*nHeight);
-
+	time12[2] = OSA_getCurTimeInMsec();
 	Mat tmp = Mat(nHeight,nWidth,CV_8UC3);
+	Mat tmpget = Mat(nHeight,nWidth,CV_8UC3);
 	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
 	cvtColor(tmp,mfcur,CV_BGR2GRAY);
-
-	time[3] = OSA_getCurTimeInMsec();
-
+	
+	time12[3] = OSA_getCurTimeInMsec();
+	printf("elapse time : %u\n",time12[3] - time12[2]);
+return 0;
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
 #endif
 
-	time[4] = OSA_getCurTimeInMsec();
-   edge_v = 5;
-   edge_h = 3;
+	time12[4] = OSA_getCurTimeInMsec();
+   //edge_v = 5;
+   //edge_h = 3;
 	/*  init the param of kalman	 */
 	if(s->bReset)
 	{
-		time[0] = 0;
-		time[3] = 0;
-		time[4] = 0;
+		time12[0] = 0;
+		time12[3] = 0;
+		time12[4] = 0;
 		s->bReset = 0;
 		InitFilter(&(s->last_af),ap_modify,&(s->flt));
 		kkalman.KalmanInitParam(s->g_pKalman, 0.0, 0.0, 0.0, 1.0, 0.0);
@@ -621,7 +651,7 @@ printf("444444444444444444444\n");
 	 else
 	 {
 
-	 	time[5] = OSA_getCurTimeInMsec();
+	 	time12[5] = OSA_getCurTimeInMsec();
 	
 		 /*  	Find the feature points	*/
 		kfindFtp.findFtp(&(s->edgeTh), s->QcifFp, &(s->QcifFpNum),s->i_width >> 2, s->i_height >> 2, 
@@ -629,13 +659,13 @@ printf("444444444444444444444\n");
 				s->CifFp, &(s->CifFpNum),s->D1Fp, &(s->D1FpNum),
 				mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel);
 
-		time[6] = OSA_getCurTimeInMsec();
+		time12[6] = OSA_getCurTimeInMsec();
 
 		/*		此处待添加调试  FTP_SHOW		*/
 		if (s->QcifFpNum < 3) //特征点太少
 		{
-			time[7] = 111;
-			time[8] = 0;
+			time12[7] = 111;
+			time12[8] = 0;
 			
 			MeErr_qcif = 10;
 			MeErr_cif = 10;
@@ -643,32 +673,33 @@ printf("444444444444444444444\n");
 		}
 		else		
 		{
-			time[7] = OSA_getCurTimeInMsec();
+			time12[7] = OSA_getCurTimeInMsec();
 			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);	
- 			time[8] = OSA_getCurTimeInMsec();
+ 			time12[8] = OSA_getCurTimeInMsec();
 			matime++;
 		}
-		time[9] = OSA_getCurTimeInMsec();
+		time12[9] = OSA_getCurTimeInMsec();
 		AnalysisMeResult(cs);
-		 time[10] = OSA_getCurTimeInMsec();
+		 time12[10] = OSA_getCurTimeInMsec();
 		MotionFilter(cs);
-		 time[11] = OSA_getCurTimeInMsec();
+		 time12[11] = OSA_getCurTimeInMsec();
 		 
 		memcpy(apout,cs->m_modify,sizeof(affine_param));
 
 			
-		time[12] = OSA_getCurTimeInMsec();
-		//MotionProcess(cs,tmp,tmp,mode);
-		//cudaMemcpy(dst.data, mfout.data, s->i_height*s->i_width, cudaMemcpyHostToDevice);
-		#if 1
+		time12[12] = OSA_getCurTimeInMsec();
+		//MotionProcess(cs,tmp,tmpget,mode);
+		MotionProcess(cs,src,dst,mode);
+		//cudaMemcpy(dst.data, tmpget.data, s->i_height*s->i_width*3, cudaMemcpyHostToDevice);
 		#if 0
+		#if 1
 		float elapsedTime;
 		( (		cudaEventCreate	(	&start)	) );
 		( (		cudaEventCreate	(	&stop)	) );
 		( (		cudaEventRecord	(	start,	0)	) );
 		#endif
 		MotionProcess(cs, src,dst,mode);
-		#if 0
+		#if 1
 		((	cudaEventRecord(	stop,	0	)));
 		((	cudaEventSynchronize(	stop)	));
 		((	cudaEventSynchronize(	start)	));
@@ -677,7 +708,7 @@ printf("444444444444444444444\n");
 		((	cudaEventDestroy(	start	)));
 		((	cudaEventDestroy(	stop	)));		
 		#endif
-		time[13] = OSA_getCurTimeInMsec();
+		time12[13] = OSA_getCurTimeInMsec();
 		#if 0
 			Mat mattmp = Mat(576,720,CV_8UC3);
 			cudaMemcpy(mattmp.data, dst.data, s->i_height*s->i_width*3, cudaMemcpyDeviceToHost);
@@ -692,15 +723,15 @@ printf("444444444444444444444\n");
 	    FRAME_EXCHANGE(s->fCifRefSobel, mfCifCur_sobel.data);
 	    FRAME_EXCHANGE(s->fQcifRef,     mfQcifCur.data);
 	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);	
-	    time[14] = OSA_getCurTimeInMsec();
+	    time12[14] = OSA_getCurTimeInMsec();
 
 	printf("cs->m_modify.dx = %f\n",cs->m_modify->dx);
 	printf("cs->m_modify.dy = %f\n",cs->m_modify->dy);
 	printf("cs->m_modify.cos = %f\n",cs->m_modify->cos);
 	printf("cs->m_modify.sin = %f\n",cs->m_modify->sin);
 	
-	//printf("preprocess time : %u\n",time[4] - time[3]);	
-  	printf("match time : %u\n",time[8] - time[7]);	
+	//printf("preprocess time : %u\n",time12[4] - time12[3]);	
+  	printf("match time : %u\n",time12[8] - time12[7]);	
 	//printf("motioncpmpensate time : %u\n",time[13] - time[12]);	
 	//printf("ellllllllllllllll time : %u\n",time[14] - time[0]);
 	 }
@@ -778,7 +809,7 @@ void CStability::analytime()
 		
 	for(i = 0;i<=12;i++)
 	{
-		tmp = (time[i+1] - time[i]);
+		tmp = (time12[i+1] - time12[i]);
 		anytime[i] += tmp;
 		
 		if(tmp < mintime[i])
@@ -786,7 +817,7 @@ void CStability::analytime()
 		else if(tmp>maxtime[i])
 			maxtime[i] = tmp;
 	}	
-		tmp = (time[14] - time[0]);
+		tmp = (time12[14] - time12[0]);
 		anytime[13] += tmp;
 		
 		if(tmp < mintime[13])

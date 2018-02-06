@@ -32,7 +32,7 @@ public:
 	affine_param* m_modify;
 
 public:
-	unsigned int time[20];
+	unsigned int time12[20];
 	 unsigned long anytime[20] = {0};
 	 unsigned int anytimenum = 0;
 	 unsigned int mintime[20];

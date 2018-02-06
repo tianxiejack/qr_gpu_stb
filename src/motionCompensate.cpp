@@ -90,6 +90,7 @@ void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,flo
         t_y_x = n * r_y + p;
         t_y_y = m * r_y + q;
         pdst = frot + r_y * i_width*3;
+	#pragma omp parallel for
         for (r_x = 0; r_x < i_width; r_x++)
         {
             x =  m * r_x + t_y_x;
@@ -98,8 +99,12 @@ void RotImg(unsigned char *forg,unsigned char *frot,int i_width,int i_height,flo
             y = y >> 10;
 			
             if ((x < 0) || (x >= i_width) || (y < 0) || (y >= i_height)) 
+            {
+            		pdst[r_x*3] = 0;
+	   	  	pdst[r_x*3+1] = 0;
+	     		pdst[r_x*3+2] = 0;
             		continue;
-			
+            }	
             pdst[r_x*3] = forg[y * i_width*3 + x*3];
 	     pdst[r_x*3+1] = forg[y * i_width*3 + x*3+1];
 	     pdst[r_x*3+2] = forg[y * i_width*3 + x*3+2];

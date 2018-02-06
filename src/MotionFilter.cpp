@@ -115,8 +115,7 @@ void ParamFilter(CStability* mcs, affine_param *pAp_cur)
 
     flt->xout   = (float)( hKalman->state_post[2] - pAp_cur->dx);
     flt->yout   = (float)( hKalman->state_post[4] - pAp_cur->dy);
-
-
+	
 }
 
 /*

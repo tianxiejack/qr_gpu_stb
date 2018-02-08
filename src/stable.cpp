@@ -66,8 +66,9 @@ void run_stable(Mat src,Mat dst,int nWidth,int nheight,uchar mode,unsigned int e
 
 void destroy_stable(void)
 {
-	pStableObj->CloseStabilize(pStableObj->tss);
-}
+	if(pStableObj != NULL)
+		pStableObj->CloseStabilize(pStableObj->tss);
+}	
 
 void inline AnalysisMeResult( CStability * mcs)
 {
@@ -367,8 +368,9 @@ void CStability::run()
 
 void CStability::CloseStabilize(stb_t *s)
 {
-	kkalman.KalmanClose(s->g_pKalman);
-	CloseStabilize(s);
+	s->bReset = 1;
+	//kkalman.KalmanClose(s->g_pKalman);
+	//CloseStabilize(s);
 }
 
 void CStability::showPoints(unsigned char code)
@@ -614,8 +616,8 @@ printf("444444444444444444444\n");
 	cvtColor(tmp,mfcur,CV_BGR2GRAY);
 	
 	time12[3] = OSA_getCurTimeInMsec();
-	printf("elapse time : %u\n",time12[3] - time12[2]);
-return 0;
+	//printf("elapse time : %u\n",time12[3] - time12[2]);
+
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
 #endif
@@ -685,7 +687,6 @@ return 0;
 		 time12[11] = OSA_getCurTimeInMsec();
 		 
 		memcpy(apout,cs->m_modify,sizeof(affine_param));
-
 			
 		time12[12] = OSA_getCurTimeInMsec();
 		//MotionProcess(cs,tmp,tmpget,mode);

@@ -151,7 +151,7 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
    	   default:
    		   	   break;
 	}
-	//cos = 1.0;sin = 0.0;dx = 33.0;dy = 8.0;
+	//cos = 1.0;sin = 0.0;dx = 100.0;dy = 50.0;
 	//RotImg(src.data,dst.data,s->i_width,s->i_height,cos,sin,dx,dy);
 	
 	RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height);

@@ -6,7 +6,8 @@ void MotionProcess(CStability* mcs,Mat src,Mat dst,uchar mode);
 
 void Rotate_Tradition2(int x, int y, affine_param *ap, float *px1, float *py1);
 int getColor(float x, float y, unsigned char *c, int w);
-void RotImgProgress1(unsigned char *src, unsigned char *dst, int width,  int height,affine_param *ap, int width_dst, int height_dst);
+
+void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,affine_param* ap,unsigned char mode);
 
 
 #endif

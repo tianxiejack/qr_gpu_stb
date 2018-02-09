@@ -25,7 +25,7 @@ typedef struct
 extern void Create_stable();
 extern void destroy_stable();
 extern void run_stable(cv::Mat src,cv::Mat dst,int nWidth,int nheight,unsigned char mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout);
-extern void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode);
+extern void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,affine_param* ap,unsigned char mode);
 
 #endif
 

@@ -610,13 +610,14 @@ printf("444444444444444444444\n");
 	//extractUYVY2Gray(tmp,mfcur);
 	//memcpy(mfcur.data,src.data,nWidth*nHeight);
 	time12[2] = OSA_getCurTimeInMsec();
+	#if 0
 	Mat tmp = Mat(nHeight,nWidth,CV_8UC3);
 	Mat tmpget = Mat(nHeight,nWidth,CV_8UC3);
 	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
 	cvtColor(tmp,mfcur,CV_BGR2GRAY);
-	
+	#endif
+	memcpy(mfcur.data,src.data,nWidth*nHeight);
 	time12[3] = OSA_getCurTimeInMsec();
-	//printf("elapse time : %u\n",time12[3] - time12[2]);
 
 	/*	pre-process	*/
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
@@ -666,7 +667,7 @@ printf("444444444444444444444\n");
 		/*		此处待添加调试  FTP_SHOW		*/
 		if (s->QcifFpNum < 3) //特征点太少
 		{
-			time12[7] = 111;
+			time12[7] = 0;
 			time12[8] = 0;
 			
 			MeErr_qcif = 10;
@@ -690,7 +691,7 @@ printf("444444444444444444444\n");
 			
 		time12[12] = OSA_getCurTimeInMsec();
 		//MotionProcess(cs,tmp,tmpget,mode);
-		MotionProcess(cs,src,dst,mode);
+		//MotionProcess(cs,src,dst,mode);
 		//cudaMemcpy(dst.data, tmpget.data, s->i_height*s->i_width*3, cudaMemcpyHostToDevice);
 		#if 0
 		#if 1
@@ -726,18 +727,21 @@ printf("444444444444444444444\n");
 	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);	
 	    time12[14] = OSA_getCurTimeInMsec();
 
+#if 0
 	printf("cs->m_modify.dx = %f\n",cs->m_modify->dx);
 	printf("cs->m_modify.dy = %f\n",cs->m_modify->dy);
 	printf("cs->m_modify.cos = %f\n",cs->m_modify->cos);
 	printf("cs->m_modify.sin = %f\n",cs->m_modify->sin);
-	
-	//printf("preprocess time : %u\n",time12[4] - time12[3]);	
+
+	printf("get src time : %u\n",time12[3] - time12[2]);
+	printf("preprocess time : %u\n",time12[4] - time12[3]);	
   	printf("match time : %u\n",time12[8] - time12[7]);	
-	//printf("motioncpmpensate time : %u\n",time[13] - time[12]);	
-	//printf("ellllllllllllllll time : %u\n",time[14] - time[0]);
+	//printf("motioncpmpensate time : %u\n",time12[13] - time12[12]);	
+	printf("ellllllllllllllll time : %u\n",time12[14] - time12[0]);
+#endif
 	 }
 	
-	//analytime();
+	analytime();
 
 	return 0;
 }
@@ -757,6 +761,11 @@ void CStability::analytime()
 
 		//for(i = 0;i<11;i++)
 		{
+			i = 2;
+			printf("\nget src min[%d] = %u\n",i,mintime[i]);
+			printf("get src avr[%d] = %u\n",i,avr[i]);	
+			printf("get src max[%d] = %u\n",i,maxtime[i]);
+			
 			i = 3;
 			printf("\npreprocess min[%d] = %u\n",i,mintime[i]);
 			printf("preprocess avr[%d] = %u\n",i,avr[i]);	
@@ -777,15 +786,15 @@ void CStability::analytime()
 			//printf("analy avr[%d] = %u\n",i,avr[i]);	
 			//printf("analy max[%d] = %u\n",i,maxtime[i]);	
 			
-			//i = 10;
-			//printf("motionfilter min[%d] = %u\n",i,mintime[i]);
-			//printf("motionfilter avr[%d] = %u\n",i,avr[i]);	
-			//printf("motionfilter max[%d] = %u\n",i,maxtime[i]);	
+			i = 10;
+			printf("motionfilter min[%d] = %u\n",i,mintime[i]);
+			printf("motionfilter avr[%d] = %u\n",i,avr[i]);	
+			printf("motionfilter max[%d] = %u\n",i,maxtime[i]);	
 
-			i = 12;
-			printf("motioncpmpensate min[%d] = %u\n",i,mintime[i]);
-			printf("motioncpmpensate avr[%d] = %u\n",i,avr[i]);	
-			printf("motioncpmpensate max[%d] = %u\n",i,maxtime[i]);	
+			//i = 12;
+			//printf("motioncpmpensate min[%d] = %u\n",i,mintime[i]);
+			//printf("motioncpmpensate avr[%d] = %u\n",i,avr[i]);	
+			//printf("motioncpmpensate max[%d] = %u\n",i,maxtime[i]);	
 
 			i=13;
 			printf("allcost min[%d] = %u\n",i,mintime[i]);

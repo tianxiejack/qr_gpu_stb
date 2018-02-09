@@ -157,6 +157,42 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
 	RotImgProgress_cuda(src.data, dst.data, cos, sin, dx, dy,s->i_width, s->i_height);
 }
 
+void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,affine_param* ap,unsigned char mode)
+{
+	float cos = ap->cos;
+	float sin = ap->sin;
+	float dx = ap->dx;
+	float dy = ap->dy;
+
+	switch(mode)
+	{
+   	   case COMPENSATE_NORMAL:
+   		   	   //do nothing;
+   		   	   break;
+   	   case COMPENSATE_X:
+   		   	   dy = 0;
+   		   	   cos = 1.0;
+   		   	   sin = 0.0;
+   		   	   break;
+   	   case COMPENSATE_Y:
+   		   	   dx = 0;
+   		   	   cos = 1.0;
+   		   	   sin = 0.0;
+   		   	   break;
+   	   case COMPENSATE_ROT:
+   		   	   dx = 0.0;
+   		   	   dy = 0.0;
+   		   	   break;
+   	   default:
+   		   	   break;
+	}
+
+	printf("dx = %f,dy= %f\n",dx,dy);
+	
+	RotImgProgress_cuda(src, dst, cos, sin, dx, dy,nWidth, nheight);
+}
+
+
 
 void Rotate_Tradition2(int x, int y, affine_param *ap, float *px1, float *py1)
 {
@@ -199,46 +235,5 @@ int getColor(float x, float y, unsigned char *c, int w)
 	double dx = x-b;
 
 	return (int)(0.5 + (c[a*w+b]*(1-dy)+c[(a+1)*w+b]*dy)*(1-dx)+(c[a*w+b+1]*(1-dy)+c[(a+1)*w+b+1]*dy)*dx);
-}
-
-void RotImgProgress1(unsigned char *src, unsigned char *dst, int width,  int height,affine_param *ap, int width_dst, int height_dst) 
-{
-	int x, y;
-	float x2, y2;	
-
-	if(!dst)
-		return;
-#if 1
-	for (y=0; y<height_dst; y++){
-		for (x=0; x<width_dst; x++){
-
-			Rotate_Tradition2(x, y, ap, &x2, &y2);				
-			if(x2>=0 && x2<width && y2>=0 && y2<height)
-			{
-				//dst[y*width_dst + x] = src[y22*width + x22];
-				dst[y*width_dst + x] = getColor(x2, y2, src, width);
-			}
-		}
-	}
-#else
-	cudaError_t cudaStatus;
-	int byteCount_rot;
-	unsigned char *d_src = NULL;
-	unsigned char *d_rot = NULL;
-
-	byteCount_rot = width * height * sizeof(unsigned char);
-	cudaStatus = cudaMalloc((void**)&d_src, byteCount_rot);
-	cudaStatus = cudaMalloc((void**)&d_rot, byteCount_rot);
-	cudaStatus = cudaMemcpy(d_src, src, byteCount_rot, cudaMemcpyHostToDevice);
-	cudaStatus = cudaMemcpy(d_rot, dst, byteCount_rot, cudaMemcpyHostToDevice);
-
-	RotImgProgress_cuda(d_src, d_rot, ap->cos, ap->sin, ap->dx, ap->dy, width, height, width_dst, height_dst);
-
-	cudaStatus = cudaMemcpy(dst, d_rot, byteCount_rot, cudaMemcpyDeviceToHost);
-	cudaFree(d_src);
-	cudaFree(d_rot);
-#endif
-	Mat tmpshow =Mat(height,width,CV_8UC1,dst);
-	imshow("motion tmp",tmpshow);
 }
 

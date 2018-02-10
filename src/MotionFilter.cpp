@@ -163,8 +163,8 @@ int MotionFilter(CStability * mcs)
         //pAp_adj->sin = adj_scale * sin(adj_theta); //-pAp_cur->sin;
         pAp_adj->cos = cos(c2o_theta);//cos(adj_theta);//pAp_cur->cos;
         pAp_adj->sin =  sin(c2o_theta);//sin(adj_theta);//-pAp_cur->sin;
-        pAp_adj->dx =  2*flt->xout;
-        pAp_adj->dy =  2*flt->yout;
+        pAp_adj->dx =  1.5*flt->xout;
+        pAp_adj->dy =  1.5*flt->yout;
 
 
         pAp_last->cos = pAp_adj->cos;

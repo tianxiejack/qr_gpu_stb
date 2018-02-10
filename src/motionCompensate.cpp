@@ -187,7 +187,7 @@ void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,af
    		   	   break;
 	}
 
-	printf("dx = %f,dy= %f\n",dx,dy);
+	//intf("dx = %f,dy= %f\n",dx,dy);
 	
 	RotImgProgress_cuda(src, dst, cos, sin, dx, dy,nWidth, nheight);
 }

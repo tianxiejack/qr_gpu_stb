@@ -159,6 +159,7 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
 
 void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,affine_param* ap,unsigned char mode)
 {
+return ;
 	float cos = ap->cos;
 	float sin = ap->sin;
 	float dx = ap->dx;
@@ -188,8 +189,18 @@ void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,af
 	}
 
 	//intf("dx = %f,dy= %f\n",dx,dy);
+
+	//unsigned char* tmp1 = (unsigned char*)malloc(720*576);
+	//unsigned char* tmp2 = (unsigned char*)malloc(720*576);
 	
-	RotImgProgress_cuda(src, dst, cos, sin, dx, dy,nWidth, nheight);
+	//cudaMemcpy(src, tmp1, 720*576, cudaMemcpyDeviceToHost);
+	//RotImg(tmp1,tmp2,720,576,cos,sin,dx,dy);
+	//cudaMemcpy(tmp2, dst, 720*576, cudaMemcpyHostToDevice);
+
+	//free(tmp1);
+	//free(tmp2);
+	
+	//RotImgProgress_cuda(src, dst, cos, sin, dx, dy,nWidth, nheight);
 }
 
 

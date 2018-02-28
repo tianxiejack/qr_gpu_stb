@@ -505,6 +505,7 @@ void extractUYVY2Gray(Mat src, Mat dst)
 
 int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v,affine_param* apout)
 {
+	//unsigned int tt0 = OSA_getCurTimeInMsec();
 	int i;
 	CStability *cs = pThis;
 	stb_t* s = cs->tss;
@@ -513,7 +514,7 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	int ttt,nnn = 0;
 	cudaEvent_t	start, stop;
 	static float pauseInput = 1000;
-	time12[0] = OSA_getCurTimeInMsec();
+	//time12[0] = OSA_getCurTimeInMsec();
 	/*   create the Mat obj again and again for attach to the new address */
 	//mfout = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1Out->buffer[0]);
 
@@ -531,13 +532,18 @@ int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,
 	edge_h = cedge_h / s->grid_h ;
 	edge_v = cedge_v / s->grid_w ;
 		
-	for (int i = 0; i < (MAX_WIDTH>> 2) * (MAX_HEIGHT>> 2); i++)
-    	{
-       	s->D1Fp[i].ftv = 0x00;
-       	s->CifFp[i].ftv = 0x00;
-        	s->QcifFp[i].ftv = 0x00;
-    	}
+	//for (int i = 0; i < (MAX_WIDTH>> 2) * (MAX_HEIGHT>> 2); i++)
+    	//{
+       //	s->D1Fp[i].ftv = 0x00;
+       //	s->CifFp[i].ftv = 0x00;
+       // 	s->QcifFp[i].ftv = 0x00;
+    	//}
+	memset(s->D1Fp,0,   (MAX_WIDTH>>2)*(MAX_HEIGHT>>2)*sizeof(FPOINT));
+	memset(s->CifFp,0,  (MAX_WIDTH>>2)*(MAX_HEIGHT>>2)*sizeof(FPOINT));
+	memset(s->QcifFp,0, (MAX_WIDTH>>2)*(MAX_HEIGHT>>2)*sizeof(FPOINT));
 
+	//unsigned int tt1 = OSA_getCurTimeInMsec();
+	//printf("tt1 - tt0 = %u\n",tt1 - tt0);
 	// record the video
 	#if 0
 	Mat temp = Mat(576,720,CV_8UC3);
@@ -588,6 +594,7 @@ printf("444444444444444444444\n");
 	
 	
 #else
+
 	mfout = Mat(s->i_height, s->i_width, CV_8UC1);
 
 	mfcur = Mat(s->i_height, s->i_width, CV_8UC1, s->fD1Cur->buffer[0]);
@@ -605,28 +612,35 @@ printf("444444444444444444444\n");
 	mfcur_sobel_ref = Mat(s->i_height, s->i_width, CV_8UC1,s->fD1RefSobel);
 	mfCifCur_sobel_ref = Mat(s->i_height>>1, s->i_width>>1, CV_8UC1,s->fCifRefSobel);
 	mfQCifCur_sobel_ref = Mat(s->i_height>>2, s->i_width>>2, CV_8UC1,s->fQcifRefSobel);
-
+	
 	//src.copyTo(mfcur);
 	//extractUYVY2Gray(tmp,mfcur);
 	//memcpy(mfcur.data,src.data,nWidth*nHeight);
-	time12[2] = OSA_getCurTimeInMsec();
+	//time12[2] = OSA_getCurTimeInMsec();
 	#if 0
 	Mat tmp = Mat(nHeight,nWidth,CV_8UC3);
 	Mat tmpget = Mat(nHeight,nWidth,CV_8UC3);
 	cudaMemcpy(tmp.data, src.data, nWidth*nHeight*3, cudaMemcpyDeviceToHost);
 	cvtColor(tmp,mfcur,CV_BGR2GRAY);
 	#endif
-	memcpy(mfcur.data,src.data,nWidth*nHeight);
-	time12[3] = OSA_getCurTimeInMsec();
+	
+	memcpy(mfcur.data,src.data,nWidth*nHeight);	
+	//time12[3] = OSA_getCurTimeInMsec();
 
 	/*	pre-process	*/
+	//unsigned int tt0 = OSA_getCurTimeInMsec();
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
+	//unsigned int tt1 = OSA_getCurTimeInMsec();
+	//printf("tt1 - tt0 = %u\n",tt1 - tt0);
+	// 8 - 16 ms ------  11ms
 #endif
 
-	time12[4] = OSA_getCurTimeInMsec();
+	//time12[4] = OSA_getCurTimeInMsec();
    //edge_v = 5;
    //edge_h = 3;
 	/*  init the param of kalman	 */
+
+
 	if(s->bReset)
 	{
 		time12[0] = 0;
@@ -654,17 +668,24 @@ printf("444444444444444444444\n");
 	 else
 	 {
 
-	 	time12[5] = OSA_getCurTimeInMsec();
-	
+	 	//time12[5] = OSA_getCurTimeInMsec();
+		
 		 /*  	Find the feature points	*/
+
+		//unsigned int tt0 = OSA_getCurTimeInMsec();
+
 		kfindFtp.findFtp(&(s->edgeTh), s->QcifFp, &(s->QcifFpNum),s->i_width >> 2, s->i_height >> 2, 
 				s->i_width >> 1, s->i_width,s->grid_w, s->grid_h, edge_h, edge_v,
 				s->CifFp, &(s->CifFpNum),s->D1Fp, &(s->D1FpNum),
 				mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel);
-
-		time12[6] = OSA_getCurTimeInMsec();
+		//unsigned int tt1 = OSA_getCurTimeInMsec();
+		//printf("tt1 - tt0 = %u\n",tt1 - tt0);
+		//   1 ms
+		//time12[6] = OSA_getCurTimeInMsec();
 
 		/*		此处待添加调试  FTP_SHOW		*/
+
+		unsigned int tt0 = OSA_getCurTimeInMsec();
 		if (s->QcifFpNum < 3) //特征点太少
 		{
 			time12[7] = 0;
@@ -681,6 +702,10 @@ printf("444444444444444444444\n");
  			time12[8] = OSA_getCurTimeInMsec();
 			matime++;
 		}
+
+		unsigned int tt1 = OSA_getCurTimeInMsec();
+		printf("tt1 - tt0 = %u\n",tt1 - tt0);
+		
 		time12[9] = OSA_getCurTimeInMsec();
 		AnalysisMeResult(cs);
 		 time12[10] = OSA_getCurTimeInMsec();

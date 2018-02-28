@@ -28,58 +28,58 @@ void IMG_mad_8x8(const unsigned char * refImg,const unsigned char * srcImg,int p
 	   for (x = 0; x < sx; x++)                                   
 	   {
 	   	  acc = 0;    
-	 #if 0
-		  for(j = 0;j<8;j++)
-		  {
-		  	psrc = (unsigned char *)(srcImg + j*pitch);
-			pref = (unsigned char *)(refImg + (j+y)*pitch + x);
-			for(i =0;i<8;i++)
-			{
-				acc += abs(psrc[i] - pref[i]);
-			}
-		  }	
-	#else
-		#pragma UNROLL(8)
-			for(j = 0;j<8;j++)
-			{
-				int srcPtr = j*pitch;
-				int refPtr = (j+y)*pitch + x;
+		  
+		 #if 0
+			  for(j = 0;j<8;j++)
+			  {
+			  	psrc = (unsigned char *)(srcImg + j*pitch);
+				pref = (unsigned char *)(refImg + (j+y)*pitch + x);
+				for(i =0;i<8;i++)
+				{
+					acc += abs(psrc[i] - pref[i]);
+				}
+			  }	
+		#else
+				#pragma UNROLL(8)
+				for(j = 0;j<8;j++)
+				{
+					int srcPtr = j*pitch;
+					int refPtr = (j+y)*pitch + x;
 
-				#if 1
-				__m128i _a128,_b128,rslt;
+					#if 1
+					__m128i _a128,_b128,rslt;
 
-				_a128 = _mm_loadl_epi64((__m128i*)(srcImg + srcPtr));
-				_b128 = _mm_loadl_epi64((__m128i*)(refImg + refPtr));
-				rslt = _mm_sad_epu8(_a128,_b128);
-				//_acc[j] = _mm_extract_epi32(rslt,0)
-				// extern int _mm_extract_epi32(_m128i src,const int ndx);
-				_acc[j] = vgetq_lane_u16((uint16x8_t)rslt,0);
-				//_mm_empty();
-				#else
+					_a128 = _mm_loadl_epi64((__m128i*)(srcImg + srcPtr));
+					_b128 = _mm_loadl_epi64((__m128i*)(refImg + refPtr));
+					rslt = _mm_sad_epu8(_a128,_b128);
+					//_acc[j] = _mm_extract_epi32(rslt,0)
+					// extern int _mm_extract_epi32(_m128i src,const int ndx);
+					_acc[j] = vgetq_lane_u16((uint16x8_t)rslt,0);
+					//_mm_empty();
+					#else
 
-				uint8x8_t _a,_b,rslt;
+					uint8x8_t _a,_b,rslt;
 
-				_a = vld1_u8((const uint8_t*)(srcImg + srcPtr));
-				_b = vld1_u8((const uint8_t*)(refImg + refPtr));
-				rslt = vabd_u8(_a,_b);
-				//uint8_t vget_lane_u8 (uint8x8_t __a, const int __b)\u037e
-	
-				_acc[j] += vget_lane_u8(rslt,0);
-				_acc[j] += vget_lane_u8(rslt,1);
-				_acc[j] += vget_lane_u8(rslt,2);
-				_acc[j] += vget_lane_u8(rslt,3);
-				_acc[j] += vget_lane_u8(rslt,4);
-				_acc[j] += vget_lane_u8(rslt,5);
-				_acc[j] += vget_lane_u8(rslt,6);
-				_acc[j] += vget_lane_u8(rslt,7);
-				
-				
-				#endif
-			}
-			acc = (_acc[0] + _acc[1] + _acc[2] + _acc[3] + _acc[4] + _acc[5] + _acc[6] + _acc[7]);
-	#endif
+					_a = vld1_u8((const uint8_t*)(srcImg + srcPtr));
+					_b = vld1_u8((const uint8_t*)(refImg + refPtr));
+					rslt = vabd_u8(_a,_b);
+					//uint8_t vget_lane_u8 (uint8x8_t __a, const int __b)\u037e
+		
+					_acc[j] += vget_lane_u8(rslt,0);
+					_acc[j] += vget_lane_u8(rslt,1);
+					_acc[j] += vget_lane_u8(rslt,2);
+					_acc[j] += vget_lane_u8(rslt,3);
+					_acc[j] += vget_lane_u8(rslt,4);
+					_acc[j] += vget_lane_u8(rslt,5);
+					_acc[j] += vget_lane_u8(rslt,6);
+					_acc[j] += vget_lane_u8(rslt,7);				
+					
+					#endif
+				}
+				acc = (_acc[0] + _acc[1] + _acc[2] + _acc[3] + _acc[4] + _acc[5] + _acc[6] + _acc[7]);
+		#endif
 
-		  if (acc < matval)                                  
+		 if (acc < matval)                                  
 	 	 {           
 		    matval = acc;                                  
 		    matx   = x;                                    
@@ -581,9 +581,9 @@ void RunMatchingPoint(stb_t* s,int* MeErr,int* MeErr_cif,int *MeErr_qcif)
     *MeErr = GetMoveParam(&(ms->cur_af), ms->D1Fp, ms->D1FpNum,ms->fD1Cur->buffer[0]);
 	unsigned int t9 =  OSA_getCurTimeInMsec();
 
-	//printf("\nt2-t1 time : %u\n",t2-t1);
-	//printf("t5-t4 time : %u\n",t5-t4);
-	//printf("t8-t7 time : %u\n",t8-t7);
+	printf("\nt2-t1 time : %u\n",t2-t1);
+	printf("t5-t4 time : %u\n",t5-t4);
+	printf("t8-t7 time : %u\n",t8-t7);
 	
     return;
 }

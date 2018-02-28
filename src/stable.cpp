@@ -741,7 +741,7 @@ printf("444444444444444444444\n");
 #endif
 	 }
 	
-	analytime();
+	//analytime();
 
 	return 0;
 }

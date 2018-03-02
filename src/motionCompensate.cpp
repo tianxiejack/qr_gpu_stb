@@ -159,7 +159,6 @@ void MotionProcess(CStability * mcs,Mat src,Mat dst,uchar mode)
 
 void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,affine_param* ap,unsigned char mode)
 {
-return ;
 	float cos = ap->cos;
 	float sin = ap->sin;
 	float dx = ap->dx;
@@ -200,7 +199,7 @@ return ;
 	//free(tmp1);
 	//free(tmp2);
 	
-	//RotImgProgress_cuda(src, dst, cos, sin, dx, dy,nWidth, nheight);
+	RotImgProgress_cuda(src, dst, cos, sin, dx, dy,nWidth, nheight);
 }
 
 

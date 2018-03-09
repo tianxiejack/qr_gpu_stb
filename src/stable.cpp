@@ -57,11 +57,11 @@ void Create_stable(void)
 	return;
 }
 
-void run_stable(Mat src,Mat dst,int nWidth,int nheight,uchar mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout)
+void run_stable(Mat src,int nWidth,int nheight,uchar mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout)
 {
 	// 1920   : edge_h  	320 pixel		edge_v	180	pixel	   // distance to the edge in pixel
 	// 720 	: edge_h 		32   pixel		edge_v 	32	pixel
-	pStableObj->RunStabilize(src,dst,nWidth,nheight,mode,edge_h,edge_v,apout);
+	pStableObj->RunStabilize(src,nWidth,nheight,mode,edge_h,edge_v,apout);
 }
 
 void destroy_stable(void)
@@ -503,7 +503,7 @@ void extractUYVY2Gray(Mat src, Mat dst)
 
 
 
-int CStability::RunStabilize(Mat src,Mat dst,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v,affine_param* apout)
+int CStability::RunStabilize(Mat src,int nWidth, int nHeight,uchar mode,unsigned int cedge_h,unsigned int cedge_v,affine_param* apout)
 {
 	//unsigned int tt0 = OSA_getCurTimeInMsec();
 	int i;
@@ -630,14 +630,13 @@ printf("444444444444444444444\n");
 	/*	pre-process	*/
 	//unsigned int tt0 = OSA_getCurTimeInMsec();
 	preprocess(mfcur, mfCifCur, mfQcifCur,mfcur_sobel,mfCifCur_sobel,mfQCifCur_sobel,s);
-	//unsigned int tt1 = OSA_getCurTimeInMsec();
-	//printf("tt1 - tt0 = %u\n",tt1 - tt0);
+	
 	// 8 - 16 ms ------  11ms
 #endif
 
 	//time12[4] = OSA_getCurTimeInMsec();
-   //edge_v = 5;
-   //edge_h = 3;
+   	//edge_v = 5;
+   	//edge_h = 3;
 	/*  init the param of kalman	 */
 
 
@@ -685,11 +684,11 @@ printf("444444444444444444444\n");
 
 		/*		此处待添加调试  FTP_SHOW		*/
 
-		unsigned int tt0 = OSA_getCurTimeInMsec();
+		//unsigned int tt0 = OSA_getCurTimeInMsec();
 		if (s->QcifFpNum < 3) //特征点太少
 		{
-			time12[7] = 0;
-			time12[8] = 0;
+			//time12[7] = 0;
+			//time12[8] = 0;
 			
 			MeErr_qcif = 10;
 			MeErr_cif = 10;
@@ -697,24 +696,27 @@ printf("444444444444444444444\n");
 		}
 		else		
 		{
-			time12[7] = OSA_getCurTimeInMsec();
+		//	time12[7] = OSA_getCurTimeInMsec();
+			unsigned int ts1 = OSA_getCurTimeInMsec();
 			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);	
- 			time12[8] = OSA_getCurTimeInMsec();
+			unsigned int ts2 = OSA_getCurTimeInMsec();
+ 		//	time12[8] = OSA_getCurTimeInMsec();
+ 			printf("matching time = %d\n",ts2 - ts1);
 			matime++;
 		}
 
-		unsigned int tt1 = OSA_getCurTimeInMsec();
-		printf("tt1 - tt0 = %u\n",tt1 - tt0);
+		//unsigned int tt1 = OSA_getCurTimeInMsec();
+		//printf("tt1 - tt0 = %u\n",tt1 - tt0);
 		
-		time12[9] = OSA_getCurTimeInMsec();
+		//time12[9] = OSA_getCurTimeInMsec();
 		AnalysisMeResult(cs);
-		 time12[10] = OSA_getCurTimeInMsec();
+		// time12[10] = OSA_getCurTimeInMsec();
 		MotionFilter(cs);
-		 time12[11] = OSA_getCurTimeInMsec();
+		// time12[11] = OSA_getCurTimeInMsec();
 		 
 		memcpy(apout,cs->m_modify,sizeof(affine_param));
 			
-		time12[12] = OSA_getCurTimeInMsec();
+		//time12[12] = OSA_getCurTimeInMsec();
 		//MotionProcess(cs,tmp,tmpget,mode);
 		//MotionProcess(cs,src,dst,mode);
 		//cudaMemcpy(dst.data, tmpget.data, s->i_height*s->i_width*3, cudaMemcpyHostToDevice);
@@ -750,7 +752,7 @@ printf("444444444444444444444\n");
 	    FRAME_EXCHANGE(s->fCifRefSobel, mfCifCur_sobel.data);
 	    FRAME_EXCHANGE(s->fQcifRef,     mfQcifCur.data);
 	    FRAME_EXCHANGE(s->fQcifRefSobel, mfQCifCur_sobel.data);	
-	    time12[14] = OSA_getCurTimeInMsec();
+	    //time12[14] = OSA_getCurTimeInMsec();
 
 #if 0
 	printf("cs->m_modify.dx = %f\n",cs->m_modify->dx);
@@ -767,7 +769,8 @@ printf("444444444444444444444\n");
 	 }
 	
 	//analytime();
-
+	//unsigned int tt1 = OSA_getCurTimeInMsec();
+	//printf("tt1 - tt0 = %u\n",tt1 - tt0);
 	return 0;
 }
 

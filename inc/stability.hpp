@@ -24,7 +24,7 @@ typedef struct
 // 720 	: edge_h 		32   pixel		edge_v 	32	pixel
 extern void Create_stable();
 extern void destroy_stable();
-extern void run_stable(cv::Mat src,cv::Mat dst,int nWidth,int nheight,unsigned char mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout);
+extern void run_stable(cv::Mat src,int nWidth,int nheight,unsigned char mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout);
 extern void ImgProgress(unsigned char* src,unsigned char* dst,int nWidth,int nheight,affine_param* ap,unsigned char mode);
 
 #endif

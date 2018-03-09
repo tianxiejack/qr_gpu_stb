@@ -581,9 +581,9 @@ void RunMatchingPoint(stb_t* s,int* MeErr,int* MeErr_cif,int *MeErr_qcif)
     *MeErr = GetMoveParam(&(ms->cur_af), ms->D1Fp, ms->D1FpNum,ms->fD1Cur->buffer[0]);
 	unsigned int t9 =  OSA_getCurTimeInMsec();
 
-	printf("\nt2-t1 time : %u\n",t2-t1);
-	printf("t5-t4 time : %u\n",t5-t4);
-	printf("t8-t7 time : %u\n",t8-t7);
+	//printf("\nt2-t1 time : %u\n",t2-t1);
+	//printf("t5-t4 time : %u\n",t5-t4);
+	//printf("t8-t7 time : %u\n",t8-t7);
 	
     return;
 }

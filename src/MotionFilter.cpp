@@ -185,9 +185,5 @@ int MotionFilter(CStability * mcs)
         cs->kkalman.KalmanInitParam(hKalman, 0.0, 0.0, 0.0, 1.0, 0.0);
     }
 
-
-
-
-	
     return 0;
 }

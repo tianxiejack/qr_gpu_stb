@@ -291,7 +291,7 @@ void pyramid_cv(Mat mfcur,Mat mfCifCur,Mat mQcifCur,stb_t* s)
 void preprocess(Mat fcur,Mat cifCur,Mat QcifCur,Mat fCurSobel,Mat cifCurSobel,Mat QcifCurSobel,stb_t* s)
 {
 	unsigned int tm1,tm2,tm3,tmp;
-	static unsigned int tt1 = 0,tt2 = 0;
+	//static unsigned int tt1 = 0,tt2 = 0;
 
 	
 	/*	 pyramid		*/

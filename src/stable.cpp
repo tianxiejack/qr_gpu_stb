@@ -59,8 +59,6 @@ void Create_stable(void)
 
 void run_stable(Mat src,int nWidth,int nheight,uchar mode,unsigned int edge_h,unsigned int edge_v,affine_param* apout)
 {
-	// 1920   : edge_h  	320 pixel		edge_v	180	pixel	   // distance to the edge in pixel
-	// 720 	: edge_h 		32   pixel		edge_v 	32	pixel
 	pStableObj->RunStabilize(src,nWidth,nheight,mode,edge_h,edge_v,apout);
 }
 
@@ -697,11 +695,11 @@ printf("444444444444444444444\n");
 		else		
 		{
 		//	time12[7] = OSA_getCurTimeInMsec();
-			unsigned int ts1 = OSA_getCurTimeInMsec();
+			//unsigned int ts1 = OSA_getCurTimeInMsec();
 			RunMatchingPoint(s,&MeErr,&MeErr_cif,&MeErr_qcif);	
-			unsigned int ts2 = OSA_getCurTimeInMsec();
+			//unsigned int ts2 = OSA_getCurTimeInMsec();
  		//	time12[8] = OSA_getCurTimeInMsec();
- 			printf("matching time = %d\n",ts2 - ts1);
+ 			//printf("matching time = %d\n",ts2 - ts1);
 			matime++;
 		}
 
